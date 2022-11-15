@@ -233,3 +233,4 @@ def _radar_xyzt_extraction(Excel=False):
     if Excel:
         print('Saving dataframe to excel')
         df.to_excel('Radar_GPSdata.xlsx')          
+    return df
