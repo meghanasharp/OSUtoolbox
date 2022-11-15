@@ -1,0 +1,102 @@
+# -*- coding: utf-8 -*-
+"""
+Created on Wed Nov  9 16:17:38 2022
+
+@author: trunzc
+"""
+
+#extract data on flow line path
+
+
+from matplotlib import pyplot as plt
+#import matplotlib.cm as cm
+#import numpy as np
+import netCDF4 as nc
+#import seaborn as sns
+import pandas as pd
+#from math import radians, cos, sin, asin, sqrt
+#from scipy.spatial import KDTree
+from scipy.interpolate import RectBivariateSpline    # interpolate grid data to point coordinates
+#from scipy.interpolate import interp1d
+
+path_to_bedmachine = 'D:/Dropbox/RESEARCH/Qgreenland_LakeEuropa/QGreenland_v2.0.0/Additional/BedMachineGreenland_V5/BedMachineGreenland-v5.nc'
+path_to_flowline_csv = 'G:/Shared drives/6 Greenland Europa Hiawatha Projects/Lake Europa/FlowBand/Flowlines/promice_500m_europa_flowline_camp.csv'
+
+ds = nc.Dataset(path_to_bedmachine)
+
+#%%
+
+def get_netcdf_data(netcdf_file_path):#, data_type='Measures'): #
+
+    #load netcdf data
+    ds = nc.Dataset(netcdf_file_path)
+    #display all the variables stored in the netcdf file
+    print(ds.variables.keys())       
+    data = {}
+    
+    #if data_type == 'Bedmachine':  
+
+    #% extract arrays from netcdf   
+    data['surface'] = ds['surface'][:]
+    data['thickness'] = ds['thickness'][:]
+    data['bed'] = ds['bed'][:]
+    data['longitude'] = ds['x'][:]
+    data['latitude'] = ds['y'][:]         
+    
+    return data
+
+
+#%%
+
+# Load flowline path 
+
+flowline = pd.read_csv(path_to_flowline_csv, index_col=0)
+
+data = get_netcdf_data(path_to_bedmachine)
+
+#%%
+# use rbs to create a special matrice to enable position searching
+rbs_surface = RectBivariateSpline(data['longitude'], data['latitude'][::-1], data['surface'][::-1].T)
+rbs_thickness = RectBivariateSpline(data['longitude'], data['latitude'][::-1], data['thickness'][::-1].T)
+rbs_bed = RectBivariateSpline(data['longitude'], data['latitude'][::-1], data['bed'][::-1].T)
+
+
+profile_ice_surface = rbs_surface.ev(flowline.longitude, flowline.latitude)
+profile_thickness = rbs_thickness.ev(flowline.longitude, flowline.latitude)
+profile_bed = rbs_bed.ev(flowline.longitude, flowline.latitude)
+
+#%%
+fig,ax = plt.subplots()
+ax.plot(profile_ice_surface)
+ax.plot(profile_bed)
+
+# #%%
+# #initiallize dictionnary
+# keyList = ['coordinates_easting','coordinates_northing','velocity_easting','velocity_northing','velocity_magnitude']
+# flowline = {key: [] for key in keyList}
+
+# #extract initial position of the flow line
+# position_easting = initial_position_easting
+# position_northing = initial_position_northing 
+
+# #loop through the flowline position finding
+# #DOWNSTREAM
+# for time in range(time_downstream): #3450
+#     #record how many years it runs
+#     #time_downstream = time+1
+#     #pull out the vx,vy components in the velocity fields in m/y for a specific point
+#     local_velocity_easting = rbs_easting.ev(position_easting, position_northing)*time_correction_factor
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
