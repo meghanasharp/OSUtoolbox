@@ -63,7 +63,8 @@ A = 3.5 * 10**(-25) #s-1Pa-3
 
 #ice thickness
 H = profile.bedmachine_ice_thickness_m.values #m
-surface_slope = profile.bedmachine_ice_surface_elevation_masl.values
+surface_slope = profile.arcticdem_10m_ice_surface_elevation_masl.values #profile.bedmachine_ice_surface_elevation_masl.values
+
 x = profile.distance.values #m
 
 def calculate_alpha(y,x):
@@ -76,7 +77,14 @@ def calculate_alpha(y,x):
     alpha = dy/dx
     return -alpha
 
-alpha = calculate_alpha(surface_slope,x)
+alpha_raw = calculate_alpha(surface_slope,x)
+
+#smooth surface slope
+kernel_size = 20
+kernel = np.ones(kernel_size) / kernel_size
+alpha = np.convolve(alpha_raw, kernel, mode='same')
+
+
 #slope
 #!!! beware of numberical instability caused by a slope to large compare to delta x, 
 # and then if delta x is small, there can be numerical instability with delta t
@@ -94,9 +102,9 @@ us_approx = H**4 *alpha**3#*3600*24
 number = 3
 fig,ax = plt.subplots(number, sharex=True)
 
-ax[0].plot(profile.distance, profile.bedmachine_ice_surface_elevation_masl,label='ice surface elevation')
-ax[0].fill_between(profile.distance, profile.bedmachine_ice_surface_elevation_masl, profile.bedmachine_bed_elevation_masl, alpha=0.3)
-ax[0].plot(profile.distance, profile.bedmachine_bed_elevation_masl, label='bed elevation')
+ax[0].plot(profile.distance, profile.arcticdem_10m_ice_surface_elevation_masl,label='ice surface elevation - arctic dem 32m')
+ax[0].fill_between(profile.distance, profile.arcticdem_10m_ice_surface_elevation_masl, profile.bedmachine_bed_elevation_masl, alpha=0.3)
+ax[0].plot(profile.distance, profile.bedmachine_bed_elevation_masl, label='bed elevation - bedmachine')
 ax[0].axvspan(lake_area[0],lake_area[len(lake_area)-1], alpha=0.3, color='cyan', label='minimum lake extent')
 ax[0].axvspan(radar_area[0],radar_area[len(radar_area)-1], alpha=0.3, color='grey', label='radar extent')
 ax[0].set_ylabel('(m.a.s.l.)')
@@ -109,10 +117,14 @@ ax[1].axvspan(radar_area[0],radar_area[len(radar_area)-1], alpha=0.3, color='gre
 ax[1].set_ylim(-1,50)
 ax[1].set_ylabel('(m/year)')
 
-ax[2].plot(profile.distance, alpha, label='slope')
+
+ax[2].plot(profile.distance, alpha_raw, label='slope')
+ax[2].plot(profile.distance, alpha, label='smoothed slope')
 ax[2].axvspan(lake_area[0],lake_area[len(lake_area)-1], alpha=0.3, color='cyan')
 ax[2].axvspan(radar_area[0],radar_area[len(radar_area)-1], alpha=0.3, color='grey')
 ax[2].set_ylabel('(-)')
+
+ax[2].set_xlabel('Distance from ice divide (m)')
 
 for n in np.arange(number):
     ax[n].legend()
