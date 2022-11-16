@@ -28,23 +28,7 @@ from scipy.interpolate import RectBivariateSpline    # interpolate grid data to 
 from scipy.interpolate import interp1d
 
 
-#%% import data
 
-
-#path = 'D:/Dropbox/RESEARCH/Qgreenland_LakeEuropa/QGreenland_v2.0.0/Glaciology/Ice sheet velocity/PROMICE Multi-year ice velocity/'
-#filename = 'Promice_AVG5year.nc'
-netcdf_promice_file_path = 'D:/Dropbox/RESEARCH/Qgreenland_LakeEuropa/QGreenland_v2.0.0/Additional/PROMICE Multi-year ice velocity/Promice_AVG5year.nc'
-netcdf_measures_file_path = 'D:/Dropbox/RESEARCH/Qgreenland_LakeEuropa/QGreenland_v2.0.0/Additional/MEaSUREs 120m composite velocity/GRE_G0120_0000.nc'
-
-#initial coordinates of the flowlines
-#coordinate system and projection: WGS 84 / NSIDC Sea Ice Polar Stereographic North EPSG:3413
-camp = [-516335.771, -1191434.196] #x and y
-flowline_2 = [-515762.315,-1192663.735]
-ice_divide = [-510900.089,-1190477.845]
-
-#extract initial position of the flow line
-position_easting = camp[0]
-position_northing = camp[1]
 
 def get_netcdf_data(netcdf_file_path, data_type='Measures'): #
 
@@ -91,7 +75,13 @@ def extract_flowline_position(data,
                               initial_position_easting=None, 
                               initial_position_northing=None, 
                               time_upstream=None, 
-                              time_downstream=None):
+                              time_downstream=None,
+                              extent=None, #[W,S,E,N]
+                              # max_north=None, 
+                              # max_south=None, 
+                              # max_est=None, 
+                              # max_west=None, 
+                              ):
 
     # use rbs to create a special matrice to enable position searching
     rbs_easting = RectBivariateSpline(data['easting'], data['northing'][::-1], data['velocity_easting'][::-1].T) 
@@ -120,13 +110,30 @@ def extract_flowline_position(data,
         position_easting = position_easting + local_velocity_easting
         #print(position_easting)
         position_northing = position_northing + local_velocity_northing
-        #flowline['velocity_amplitude'].append(np.sqrt(local_velocity_easting**2+local_velocity_northing**2))    
-        flowline['coordinates_easting'].append(position_easting) 
-        flowline['coordinates_northing'].append(position_northing)
-        flowline['velocity_easting'].append(local_velocity_easting)
-        flowline['velocity_northing'].append(local_velocity_northing)
-        flowline['velocity_magnitude'].append(local_velocity_magnitude)
-
+        
+        if extent==None:        
+            flowline['coordinates_easting'].append(position_easting) 
+            flowline['coordinates_northing'].append(position_northing)
+            flowline['velocity_easting'].append(local_velocity_easting)
+            flowline['velocity_northing'].append(local_velocity_northing)
+            flowline['velocity_magnitude'].append(local_velocity_magnitude)
+        else:
+            south = extent[1]
+            west = extent[0]
+            north = extent[3]
+            est = extent[2]
+            if (position_easting >= west) and (position_easting <= est) and (position_northing <= north) and (position_northing >= south):                         
+                flowline['coordinates_easting'].append(position_easting) 
+                flowline['coordinates_northing'].append(position_northing)
+                flowline['velocity_easting'].append(local_velocity_easting)
+                flowline['velocity_northing'].append(local_velocity_northing)
+                flowline['velocity_magnitude'].append(local_velocity_magnitude)
+            else:
+                print('out of extent boundary')
+                break
+          
+            
+# extent=[-530000,-1201200,-510896.671,-1190480.853])
      
     #extract initial position of the flow line
     position_easting = initial_position_easting
@@ -143,30 +150,56 @@ def extract_flowline_position(data,
         #calculate position downstream for next timestep based on the velocity of the ice
         position_easting = position_easting-local_velocity_easting
         position_northing = position_northing-local_velocity_northing
+        
         #calculate position upstream for next timestep based on the velocity of the ice
         #append upstream flowline position and velocity at the beginning of the list
-        flowline['coordinates_easting'].insert(0,position_easting) 
-        flowline['coordinates_northing'].insert(0,position_northing)
-        flowline['velocity_easting'].insert(0,local_velocity_easting)
-        flowline['velocity_northing'].insert(0,local_velocity_northing)    
-        flowline['velocity_magnitude'].insert(0,local_velocity_magnitude)        
-        
-    return flowline
+        if extent==None:    
+            flowline['coordinates_easting'].insert(0,position_easting) 
+            flowline['coordinates_northing'].insert(0,position_northing)
+            flowline['velocity_easting'].insert(0,local_velocity_easting)
+            flowline['velocity_northing'].insert(0,local_velocity_northing)    
+            flowline['velocity_magnitude'].insert(0,local_velocity_magnitude)        
+        else:
+            south = extent[1]
+            west = extent[0]
+            north = extent[3]
+            est = extent[2]
+            if (position_easting >= west) and (position_easting <= est) and (position_northing <= north) and (position_northing >= south):    
+                flowline['coordinates_easting'].insert(0,position_easting) 
+                flowline['coordinates_northing'].insert(0,position_northing)
+                flowline['velocity_easting'].insert(0,local_velocity_easting)
+                flowline['velocity_northing'].insert(0,local_velocity_northing)    
+                flowline['velocity_magnitude'].insert(0,local_velocity_magnitude)    
+            else:
+                print('out of extent boundary')
+                continue
 
-def interpolate_flowline(flowline, 
-                         spacing=10, 
-                         csv_file_name='flowline.csv',
-                         plot_figure=False):
     # inpterpolate to get a equidistant profile points   
     x = flowline['coordinates_easting']
     y = flowline['coordinates_northing']
     
     # Linear length on the line
-    distance = np.cumsum(np.sqrt( np.ediff1d(x, to_begin=0)**2 + np.ediff1d(y, to_begin=0)**2 ))
+    flowline['distance'] = np.cumsum(np.sqrt( np.ediff1d(x, to_begin=0)**2 + np.ediff1d(y, to_begin=0)**2 ))
+    
+           
+    return flowline
+
+def interpolate_flowline(flowline, 
+                         spacing=10, 
+                         csv_file_name='flowline.csv',
+                         plot_figure=False,
+                         max_length=None):
+    # # inpterpolate to get a equidistant profile points   
+    x = flowline['coordinates_easting']
+    y = flowline['coordinates_northing']
+    
+    # # Linear length on the line
+    # distance = np.cumsum(np.sqrt( np.ediff1d(x, to_begin=0)**2 + np.ediff1d(y, to_begin=0)**2 ))
     #print(distance)
-    distance_total = distance[-1]
+    
+    distance_total = flowline['distance'][-1]
     print('distance_total=', distance_total)
-    distance = distance/distance_total
+    distance = flowline['distance']/distance_total
     number_of_nodes = int(distance_total/spacing)
     print('number of nodes=', number_of_nodes)
     
@@ -189,8 +222,11 @@ def interpolate_flowline(flowline,
                       'distance':distance_array
                       })
     
-    
+    if max_length is not None:
+        df = df.drop(df[df.distance>max_length].index)
+        
     df.to_csv(csv_file_name) #'europa_flowline_coordinates_110m.csv'
+    return df
     
 
 def plot_map_flowline(flowline,
@@ -198,7 +234,7 @@ def plot_map_flowline(flowline,
                       extent=[-650250, 849750, -3349750, -649750],
                       xlim=[-5.6e5,-4.9e5],
                       ylim=[-1.26e6,-1.18e6],
-                      vmin=[0,0.05] ):
+                      vmin=[0,0.05]):
 
     years = range(len(flowline['velocity_easting']))
     fig, ax = plt.subplots()
@@ -225,46 +261,115 @@ def plot_map_flowline(flowline,
 # ax[2].plot(profile/1000, velocity_profile_northing, label='velocity northing')
 # ax[2].set_xlabel('Distance from ice divide (kn)')
 # ax[2].legend()
+
+
     
-#%%
+#%% loop through the flowlines
+
+#%% import data
+
+
+#path = 'D:/Dropbox/RESEARCH/Qgreenland_LakeEuropa/QGreenland_v2.0.0/Glaciology/Ice sheet velocity/PROMICE Multi-year ice velocity/'
+#filename = 'Promice_AVG5year.nc'
+netcdf_promice_file_path = 'J:/QGreenland_v2.0.0/Additional/PROMICE Multi-year ice velocity/Promice_AVG5year.nc'
+#netcdf_measures_file_path = 'J:/QGreenland_v2.0.0/Additional/MEaSUREs 120m composite velocity/GRE_G0120_0000.nc'
 path_to_save = 'G:/Shared drives/6 Greenland Europa Hiawatha Projects/Lake Europa/FlowBand/Flowlines/'
 
 data_promice = get_netcdf_data(netcdf_promice_file_path, data_type='Promice')
 
-#data_measures = get_netcdf_data(netcdf_measures_file_path, data_type='Measures')
+# #initial coordinates of the flowlines
+# #coordinate system and projection: WGS 84 / NSIDC Sea Ice Polar Stereographic North EPSG:3413
+# camp = [-516335.771, -1191434.196] #x and y
+# start_flowline_2 = [-515762.315,-1192663.735]
+# ice_divide = [-510900.089,-1190477.845]
 
-flowline_camp = extract_flowline_position(data_promice, 
-                              time_correction_factor=365,
-                              initial_position_easting=camp[0], 
-                              initial_position_northing=camp[1], 
-                              time_upstream=3450, 
-                              time_downstream=3430)#3500
+# #extract initial position of the flow line
+# position_easting = camp[0]
+# position_northing = camp[1]
 
-plot_map_flowline(flowline_camp, data_promice,
-                  extent=[-650250, 849750, -3349750, -649750],
-                  xlim=[-5.6e5,-4.9e5],
-                  ylim=[-1.26e6,-1.18e6],
-                  vmin=[0,0.05] )
+starting_points = pd.read_csv('G:/Shared drives/6 Greenland Europa Hiawatha Projects/Lake Europa/FlowBand/Flowlines/flowline_starting_points.csv')
+starting_points['time_upstream'] = [3450, 3450, 3450, 3450, 3450, 3450, 3000 ]
+starting_points['time_downstream'] = [3430, 3000, 3000, 3000, 3000, 2500, 800 ]
 
-interpolate_flowline(flowline_camp, 
-                         spacing=10, #☺m
-                         csv_file_name=path_to_save+'promice_500m_europa_flowline_camp.csv')
+for i in [6]:#np.arange(len(starting_points)):
+    
+    
+    flowline= extract_flowline_position(data_promice, 
+                                  time_correction_factor=365,
+                                  initial_position_easting=starting_points.easting[i], 
+                                  initial_position_northing=starting_points.northing[i], 
+                                  time_upstream=starting_points.time_upstream[i], 
+                                  time_downstream=starting_points.time_downstream[i])
+                                  #extent=[-530000,-1201200,-510896.671,-1190480.853])#3500
+    
+    plot_map_flowline(flowline, data_promice,
+                      extent=[-650250, 849750, -3349750, -649750],
+                      xlim=[-5.6e5,-4.9e5],
+                      ylim=[-1.26e6,-1.18e6],
+                      vmin=[0,0.05] )
+    
+    
+    flowline_interp = interpolate_flowline(flowline, 
+                             spacing=10,
+                             max_length=25000,#☺m
+                             csv_file_name=path_to_save+'promice_500m_europa_flowline_%s.csv'%starting_points.name[i])
+
+
+
+
+#%%
+
+
+
+
+
+
+
+
+
+
+
+# #data_measures = get_netcdf_data(netcdf_measures_file_path, data_type='Measures')
+
+# flowline_camp = extract_flowline_position(data_promice, 
+#                               time_correction_factor=365,
+#                               initial_position_easting=camp[0], 
+#                               initial_position_northing=camp[1], 
+#                               time_upstream=3450, 
+#                               time_downstream=3430)
+#                               #extent=[-530000,-1201200,-510896.671,-1190480.853])#3500
+
+# plot_map_flowline(flowline_camp, data_promice,
+#                   extent=[-650250, 849750, -3349750, -649750],
+#                   xlim=[-5.6e5,-4.9e5],
+#                   ylim=[-1.26e6,-1.18e6],
+#                   vmin=[0,0.05] )
+
+
+# flowline_interp = interpolate_flowline(flowline_camp, 
+#                          spacing=10,
+#                          max_length=25000,#☺m
+#                          csv_file_name=path_to_save+'promice_500m_europa_flowline_camp.csv')
+
 
    
 # flowline_2 = extract_flowline_position(data_promice, 
 #                               time_correction_factor=365,                                       
-#                               initial_position_easting=flowline_2[0], 
-#                               initial_position_northing=flowline_2[1], 
+#                               initial_position_easting=start_flowline_2[0], 
+#                               initial_position_northing=start_flowline_2[1], 
 #                               time_upstream=3450, 
-#                               time_downstream=3500)
+#                               time_downstream=2500)
+
 # plot_map_flowline(flowline_2, data_promice,
 #                   extent=[-650250, 849750, -3349750, -649750],
 #                   xlim=[-5.6e5,-4.9e5],
 #                   ylim=[-1.26e6,-1.18e6],
 #                   vmin=[0,0.05] )
+
 # interpolate_flowline(flowline_2, 
-#                          spacing=100, 
-#                          csv_file_name=path_to_save+'promice_500m_europa_flowline_2.csv')
+#                           spacing=10, 
+#                           max_length=25000,#☺m
+#                           csv_file_name=path_to_save+'promice_500m_europa_flowline_2.csv')
 
 
 # flowline_ice_divide = extract_flowline_position(data_promice, 
@@ -272,7 +377,7 @@ interpolate_flowline(flowline_camp,
 #                               initial_position_easting=ice_divide[0], 
 #                               initial_position_northing=ice_divide[1], 
 #                               time_upstream=3450, 
-#                               time_downstream=5000)
+#                               time_downstream=6000)
   
 # plot_map_flowline(flowline_ice_divide, data_promice,
 #                   extent=[-650250, 849750, -3349750, -649750],
@@ -282,8 +387,9 @@ interpolate_flowline(flowline_camp,
 
 
 # interpolate_flowline(flowline_ice_divide, 
-#                          spacing=100, 
-#                          csv_file_name=path_to_save+'promice_500m_europa_flowline_ice_divide.csv')  
+#                           max_length=25000,#☺m                
+#                           spacing=10, 
+#                           csv_file_name=path_to_save+'promice_500m_europa_flowline_ice_divide.csv')  
 
 #%%
 
