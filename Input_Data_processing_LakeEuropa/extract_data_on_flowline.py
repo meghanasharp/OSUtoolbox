@@ -192,8 +192,14 @@ def find_extent_on_profile(extent_lower_left_corner, extent_upper_right_corner):
 
 
 # Load flowline
-profile = pd.read_csv('G:/Shared drives/6 Greenland Europa Hiawatha Projects/Lake Europa/FlowBand/Flowlines/promice_500m_europa_flowline_camp.csv', 
-                       index_col=0)
+# profile = pd.read_csv('G:/Shared drives/6 Greenland Europa Hiawatha Projects/Lake Europa/FlowBand/Flowlines/promice_500m_europa_flowline_camp.csv', 
+#                        index_col=0)
+
+# profile = pd.read_csv('G:/Shared drives/6 Greenland Europa Hiawatha Projects/Lake Europa/FlowBand/Flowlines/promice_500m_europa_flowline_2.csv', 
+#                        index_col=0)
+
+profile = pd.read_csv('G:/Shared drives/6 Greenland Europa Hiawatha Projects/Lake Europa/FlowBand/Flowlines/promice_500m_europa_flowline_ice_divide.csv', 
+                        index_col=0)
 
 lake_extent_sw = [-521139.211,-1194232.358]
 lake_extent_ne = [-514887.923,-1190764.258]
@@ -204,28 +210,33 @@ lake_area = find_extent_on_profile(lake_extent_sw, lake_extent_ne)
 
 radar_area = find_extent_on_profile(radar_extent_sw, radar_extent_ne)   
     
-
+#!! make this a function
 
 #Load data from tiffs and netcdf
-ramco_temperature = get_geotiff_data('D:/Dropbox/RESEARCH/Qgreenland_LakeEuropa/QGreenland_v2.0.0/Regional climate models/RACMO model output/Annual mean temperature at 2m 1958-2019 (1km)/racmo_t2m.tif')
-ramco_precipitation = get_geotiff_data('D:/Dropbox/RESEARCH/Qgreenland_LakeEuropa/QGreenland_v2.0.0/Regional climate models/RACMO model output/Total precipitation 1958-2019 (1km)/racmo_precip.tif')
-ramco_runoff = get_geotiff_data('D:/Dropbox/RESEARCH/Qgreenland_LakeEuropa/QGreenland_v2.0.0/Regional climate models/RACMO model output/Runoff 1958-2019 (1km)/racmo_runoff.tif')
-ramco_melt = get_geotiff_data('D:/Dropbox/RESEARCH/Qgreenland_LakeEuropa/QGreenland_v2.0.0/Regional climate models/RACMO model output/Snowmelt 1958-2019 (1km)/racmo_snowmelt.tif')
-ramco_sublimation = get_geotiff_data('D:/Dropbox/RESEARCH/Qgreenland_LakeEuropa/QGreenland_v2.0.0/Regional climate models/RACMO model output/Sublimation 1958-2019 (1km)/racmo_subl.tif')
 
-bedmachine = get_netcdf_data('D:/Dropbox/RESEARCH/Qgreenland_LakeEuropa/QGreenland_v2.0.0/Additional/BedMachineGreenland_V5/BedMachineGreenland-v5.nc', 
+ramco_temperature = get_geotiff_data('J:/QGreenland_v2.0.0/Regional climate models/RACMO model output/Annual mean temperature at 2m 1958-2019 (1km)/racmo_t2m.tif')
+ramco_precipitation = get_geotiff_data('J:/QGreenland_v2.0.0/Regional climate models/RACMO model output/Total precipitation 1958-2019 (1km)/racmo_precip.tif')
+ramco_runoff = get_geotiff_data('J:/QGreenland_v2.0.0/Regional climate models/RACMO model output/Runoff 1958-2019 (1km)/racmo_runoff.tif')
+ramco_melt = get_geotiff_data('J:/QGreenland_v2.0.0/Regional climate models/RACMO model output/Snowmelt 1958-2019 (1km)/racmo_snowmelt.tif')
+ramco_sublimation = get_geotiff_data('J:/QGreenland_v2.0.0/Regional climate models/RACMO model output/Sublimation 1958-2019 (1km)/racmo_subl.tif')
+
+bedmachine = get_netcdf_data('J:/QGreenland_v2.0.0/Additional/BedMachineGreenland_V5/BedMachineGreenland-v5.nc', 
                              data_type='Bedmachine')
 
-promice_velocity = get_netcdf_data('D:/Dropbox/RESEARCH/Qgreenland_LakeEuropa/QGreenland_v2.0.0/Additional/PROMICE Multi-year ice velocity/Promice_AVG5year.nc',
+#arcticdem_2m = get_geotiff_data('J:/QGreenland_v2.0.0/Additional/Arctic DEM/Arctic_DEM_mosaic_merged_2m.tif')
+arcticdem_10m = get_geotiff_data('J:/QGreenland_v2.0.0/Additional/Arctic DEM/Arctic_DEM_mosaic_merged_10m.tif')
+arcticdem_32m = get_geotiff_data('J:/QGreenland_v2.0.0/Additional/Arctic DEM/Arctic_DEM_mosaic_merged_32m.tif')
+
+promice_velocity = get_netcdf_data('J:/QGreenland_v2.0.0/Additional/PROMICE Multi-year ice velocity/Promice_AVG5year.nc',
                                data_type='Promice')
-#measures_velocity = get_netcdf_data('D:/Dropbox/RESEARCH/Qgreenland_LakeEuropa/QGreenland_v2.0.0/Additional/MEaSUREs 120m composite velocity/GRE_G0120_0000.nc', 
+#measures_velocity = get_netcdf_data('J:/QGreenland_v2.0.0/Additional/MEaSUREs 120m composite velocity/GRE_G0120_0000.nc', 
 #                                data_type='Measures')
 
 
 
 #extract profiles
 profile['ramco_2m_air_temperature_kelvin'] = get_data_from_profile(profile, ramco_temperature, 'grid_interpolated')
-profile['ramco_total_precipitation_mm_water_equivalent']  = get_data_from_profile(profile, ramco_precipitation, 'grid_interpolated',)
+profile['ramco_total_precipitation_mm_water_equivalent']  = get_data_from_profile(profile, ramco_precipitation, 'grid_interpolated')
 profile['ramco_runoff_mm_water_equivalent']  = get_data_from_profile(profile, ramco_runoff, 'grid_interpolated')
 profile['ramco_snowmelt_mm_water_equivalent']  = get_data_from_profile(profile, ramco_melt, 'grid_interpolated')
 profile['ramco_sublimation_mm_water_equivalent']  = get_data_from_profile(profile, ramco_sublimation, 'grid_interpolated')
@@ -234,9 +245,13 @@ profile['bedmachine_ice_surface_elevation_masl']  = get_data_from_profile(profil
 profile['bedmachine_ice_thickness_m']  = get_data_from_profile(profile, bedmachine, 'thickness')
 profile['bedmachine_bed_elevation_masl']  = get_data_from_profile(profile, bedmachine, 'bed')
 
+#profile['arcticdem_2m_ice_surface_elevation_masl']  = get_data_from_profile(profile, arcticdem_2m, 'grid_interpolated')
+profile['arcticdem_10m_ice_surface_elevation_masl']  = get_data_from_profile(profile, arcticdem_10m, 'grid_interpolated')
+profile['arcticdem_32m_ice_surface_elevation_masl']  = get_data_from_profile(profile, arcticdem_32m, 'grid_interpolated')
+
 profile['promice_velocity_mperday']  = get_data_from_profile(profile, promice_velocity, 'velocity_magnitude')
 
-profile.to_csv('profile_data_lake_europa.csv')
+profile.to_csv('profile_divide_data_lake_europa.csv')
 #%%
 
 fig,(ax1,ax2,ax3,ax4, ax5) = plt.subplots(5, sharex=True)
