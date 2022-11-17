@@ -94,8 +94,14 @@ def _dt_from_comment(dset):
     dmy_h_m = list(map(int,split[:-1]))
     sec = float(split[-1])
     return [dmy_h_m[0], dmy_h_m[1],dmy_h_m[2],dmy_h_m[3],dmy_h_m[4], sec]
+
+def _dt_string(dset):
+    t = dset.attrs['PCSavetimestamp']
+    t = t[:t.find(' ')]
+    split = re.split('_',t)
+    return [split[0],split[1]] 
 #%%
-def _radar_xyzt_extraction(Excel=False):
+def _radar_xyzt_extraction(Excel=False,csv=False):
     """
     Extracts x,y,z,t from hdf5 IceRadar file structure. 
     Code by Kirill Ivanov. 
@@ -149,6 +155,8 @@ def _radar_xyzt_extraction(Excel=False):
     seconds = []
     F_name = []
     L_name =[]
+    date = []
+    time = []
     
     
     #check everyfile in the current working directory 
@@ -173,6 +181,8 @@ def _radar_xyzt_extraction(Excel=False):
                     h = np.zeros((tnum,))
                     mi = np.zeros((tnum,))
                     s = np.zeros((tnum,))
+                    dt = np.zeros((tnum,))
+                    tm = np.zeros((tnum,))
                     #get the data from every echogram in a line
                     for loc_num in range(tnum):
                         echogram = dset['location_{:d}'.format(loc_num)]['datacapture_'+ch]['echogram_'+ch]
@@ -192,6 +202,7 @@ def _radar_xyzt_extraction(Excel=False):
                                 lat[loc_num] = float(_xmlGetVal(gps_data, 'Lat'))
                                 lon[loc_num] = float(_xmlGetVal(gps_data, 'Long'))
                                 d[loc_num], m[loc_num], yr[loc_num], h[loc_num], mi[loc_num], s[loc_num] = _dt_from_comment(echogram)
+                                dt[loc_num],tm[loc_num] = _dt_string(echogram)
                             except:          
                                 elev[loc_num] = np.nan
                                 lat[loc_num] = np.nan
@@ -213,24 +224,36 @@ def _radar_xyzt_extraction(Excel=False):
                     year = np.append(year, yr)
                     hour = np.append(hour, h)
                     minute = np.append(minute, mi)
-                    seconds = np.append(seconds, s)    
+                    seconds = np.append(seconds, s)  
+                    date = np.append(date,dt)
+                    time  = np.append(time,tm)
         else:
             print(file + 'is not supported. Only .hdf5 are accepted.')
     #Format database 
+    # final = {'File Name': F_name,
+    #          'Line Name': L_name,
+    #          'Day': day,
+    #          'Month': month,
+    #          'Year': year,
+    #          'X - lon': x,
+    #          'Y - lat': y,
+    #          'Z - Elevation': z,
+    #          'Hour': hour,
+    #          'Minute': minute,
+    #          'Seconds': seconds}
     final = {'File Name': F_name,
-             'Line Name': L_name,
-             'Day': day,
-             'Month': month,
-             'Year': year,
-             'X - lon': x,
-             'Y - lat': y,
-             'Z - Elevation': z,
-             'Hour': hour,
-             'Minute': minute,
-             'Seconds': seconds}
+              'Line Name': L_name,
+              'X - lon': x,
+              'Y - lat': y,
+              'Z - Elevation': z,
+              'Date': date,
+              'Time': time}
     df = pd.DataFrame(data = final, index = None)
     #Save to excel for convinience 
     if Excel:
         print('Saving dataframe to excel')
-        df.to_excel('Radar_GPSdata.xlsx')          
+        df.to_excel('Radar_GPSdata.xlsx')   
+    if csv:
+        print('Saving datagrame to csv')
+        df.to_csv('Radar_GPSdata.csv')
     return df
