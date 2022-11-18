@@ -95,7 +95,29 @@ def _dt_from_comment(dset):
     sec = float(split[-1])
     return [dmy_h_m[0], dmy_h_m[1],dmy_h_m[2],dmy_h_m[3],dmy_h_m[4], sec]
 #%%
-def _radar_xyzt_extraction(Excel=False):
+def _dt_string(dset):
+    """
+    Return the date and time as strings. 
+    Code by Kirill Ivanov.
+    
+    Parameters
+    ----------
+    dset: h5py._hl.group.Group
+         a single line dataset 
+        
+    Return
+    ----------
+    split: str
+        0 - date day/month/year
+        1 - time hour/minute/decimal seconds
+        
+    """
+    t = dset.attrs['PCSavetimestamp']
+    t = t[:t.find(' ')]
+    split = re.split('_',t)
+    return [split[0],split[1]] 
+#%%
+def _radar_xyzt_extraction(time_format='csv',Excel=False,csv=False):
     """
     Extracts x,y,z,t from hdf5 IceRadar file structure. 
     Code by Kirill Ivanov. 
@@ -108,8 +130,14 @@ def _radar_xyzt_extraction(Excel=False):
     Make sure that only IceRadar hdf5 files are in the directory. 
     
     {Optional}
-    Excel = False/True 
+    time_format: str / separate 
+        str - dataframe will have time in str, separeted by time and date. 
+        separate - dataframe will have time in int and float fully separated into columns
+    Excel: False/True 
         True - function will write excel file to the current directory with 
+        final dataframe
+    csv: False/True
+        True - function will write csv file to the current directory with 
         final dataframe
     
     Return
@@ -129,8 +157,6 @@ def _radar_xyzt_extraction(Excel=False):
         'Seconds': float. 
 
     """
-    
-    
     #Assign variables
     gps_cluster_str = 'GPS Cluster- MetaData_xml'
     gps_fix_str = 'GPS Fix valid'
@@ -149,6 +175,8 @@ def _radar_xyzt_extraction(Excel=False):
     seconds = []
     F_name = []
     L_name =[]
+    date = list()
+    time = list()
     
     
     #check everyfile in the current working directory 
@@ -173,6 +201,8 @@ def _radar_xyzt_extraction(Excel=False):
                     h = np.zeros((tnum,))
                     mi = np.zeros((tnum,))
                     s = np.zeros((tnum,))
+                    dt = []
+                    tm = []
                     #get the data from every echogram in a line
                     for loc_num in range(tnum):
                         echogram = dset['location_{:d}'.format(loc_num)]['datacapture_'+ch]['echogram_'+ch]
@@ -192,6 +222,9 @@ def _radar_xyzt_extraction(Excel=False):
                                 lat[loc_num] = float(_xmlGetVal(gps_data, 'Lat'))
                                 lon[loc_num] = float(_xmlGetVal(gps_data, 'Long'))
                                 d[loc_num], m[loc_num], yr[loc_num], h[loc_num], mi[loc_num], s[loc_num] = _dt_from_comment(echogram)
+                                temp = _dt_string(echogram)
+                                dt.append(temp[0])
+                                tm.append(temp[1])
                             except:          
                                 elev[loc_num] = np.nan
                                 lat[loc_num] = np.nan
@@ -213,24 +246,42 @@ def _radar_xyzt_extraction(Excel=False):
                     year = np.append(year, yr)
                     hour = np.append(hour, h)
                     minute = np.append(minute, mi)
-                    seconds = np.append(seconds, s)    
+                    seconds = np.append(seconds, s)  
+                    date.extend(dt)
+                    time.extend(tm)
+                    del dt, tm
         else:
             print(file + 'is not supported. Only .hdf5 are accepted.')
     #Format database 
-    final = {'File Name': F_name,
-             'Line Name': L_name,
-             'Day': day,
-             'Month': month,
-             'Year': year,
-             'X - lon': x,
-             'Y - lat': y,
-             'Z - Elevation': z,
-             'Hour': hour,
-             'Minute': minute,
-             'Seconds': seconds}
+    if time_format == 'separate':
+        final = {'File Name': F_name,
+                  'Line Name': L_name,
+                  'Day': day,
+                  'Month': month,
+                  'Year': year,
+                  'X - lon': x,
+                  'Y - lat': y,
+                  'Z - Elevation': z,
+                  'Hour': hour,
+                  'Minute': minute,
+                  'Seconds': seconds}
+    elif time_format == 'csv':
+        mask = np.argwhere(~np.isnan(x))
+        final = {'File Name': F_name[mask][:,0],
+                  'Line Name': L_name[mask][:,0],
+                  'X - lon': x[mask][:,0],
+                  'Y - lat': y[mask][:,0],
+                  'Z - Elevation': z[mask][:,0],
+                  'Date': date,
+                  'Time': time}
+    else:
+        raise ValueError('Inappropriate value. Choose (csv) or (separate)')
     df = pd.DataFrame(data = final, index = None)
     #Save to excel for convinience 
     if Excel:
         print('Saving dataframe to excel')
-        df.to_excel('Radar_GPSdata.xlsx')          
+        df.to_excel('Radar_GPSdata.xlsx')   
+    if csv:
+        print('Saving datagrame to csv')
+        df.to_csv('Radar_GPSdata.csv')
     return df
