@@ -54,9 +54,9 @@ def concat_gps_csv_files(path_to_folder=None, path_to_save=None, output_filename
     df = df.reset_index(drop=True)
     
     #create time array in local and utc time    
-    df['time_local'] = dt.datetime.strptime("01/01/22", "%m/%d/%y") + pd.to_timedelta(df.day_of_year,'d')  + pd.to_timedelta(df.decimal_hour,'h')
-    df['time_local'] = np.round(df['time_local'].astype(np.int64), -9).astype('datetime64[ns]')
-    df['time_utc'] = df['time_local'] + dt.timedelta(hours = 3)
+    df['time_utc'] = dt.datetime.strptime("01/01/22", "%m/%d/%y") + pd.to_timedelta(df.day_of_year,'d')  + pd.to_timedelta(df.decimal_hour,'h')
+    df['time_utc'] = np.round(df['time_utc'].astype(np.int64), -9).astype('datetime64[ns]')
+    df['time_local'] = df['time_utc'] + dt.timedelta(hours = -3)
     
     #save to a csv file
     df.to_csv(path_to_save + output_filename + '.csv')#, encoding='utf-8-sig')
