@@ -198,7 +198,7 @@ def find_extent_on_profile(extent_lower_left_corner, extent_upper_right_corner):
 # profile = pd.read_csv('G:/Shared drives/6 Greenland Europa Hiawatha Projects/Lake Europa/FlowBand/Flowlines/promice_500m_europa_flowline_2.csv', 
 #                        index_col=0)
 
-profile = pd.read_csv('G:/Shared drives/6 Greenland Europa Hiawatha Projects/Lake Europa/FlowBand/Flowlines/promice_500m_europa_flowline_ice_divide.csv', 
+profile = pd.read_csv('G:/Shared drives/6 Greenland Europa Hiawatha Projects/Lake Europa/FlowBand/Flowlines/promice_500m_europa_flowline_camp.csv', 
                         index_col=0)
 
 lake_extent_sw = [-521139.211,-1194232.358]
@@ -251,7 +251,12 @@ profile['arcticdem_32m_ice_surface_elevation_masl']  = get_data_from_profile(pro
 
 profile['promice_velocity_mperday']  = get_data_from_profile(profile, promice_velocity, 'velocity_magnitude')
 
-profile.to_csv('profile_divide_data_lake_europa.csv')
+#this calculation is based of Kiya and Georgia. its missing drift erosion
+profile['ramco_total_mass_loss'] = profile['ramco_runoff_mm_water_equivalent']-profile['ramco_sublimation_mm_water_equivalent']
+# for christian's model
+profile['ramco_mass_balance'] = profile['ramco_total_precipitation_mm_water_equivalent'] - profile['ramco_total_mass_loss']
+
+profile.to_csv('profile_data_lake_europa.csv')
 #%%
 
 fig,(ax1,ax2,ax3,ax4, ax5) = plt.subplots(5, sharex=True)
