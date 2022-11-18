@@ -9,6 +9,7 @@ Created on Fri Nov 11 11:26:39 2022
 
 import pandas as pd
 import matplotlib.pyplot as plt
+#from matplotlib.pyplot import cm
 import numpy as np
 
 #load profile data
@@ -59,7 +60,9 @@ g = 9.81 #m/s2 (N/kg)
 
 #creep paramter
 #exemple values page 72-74 in Cuffey and Patterson Chap 3.4.6
-A = 3.5 * 10**(-25) #s-1Pa-3
+#A = 3.5 * 10**(-25) #s-1Pa-3
+
+cuffey = pd.read_csv('A_values_cuffeyPatterson_table3_4.csv')
 
 #ice thickness
 H = profile.bedmachine_ice_thickness_m.values #m
@@ -79,11 +82,19 @@ def calculate_alpha(y,x):
 
 alpha_raw = calculate_alpha(surface_slope,x)
 
-#smooth surface slope
-kernel_size = 20
-kernel = np.ones(kernel_size) / kernel_size
-alpha = np.convolve(alpha_raw, kernel, mode='same')
+df = pd.DataFrame({'alpha':alpha_raw})
 
+alpha = df.alpha.rolling(window=60,center=True).mean()
+
+# #smooth surface slope
+# kernel_size = 20
+# array = np.arange(len(kernel))
+# kernel = np.ones(kernel_size) / kernel_size
+# alpha = np.convolve(alpha_raw, kernel, mode='same')
+
+
+
+#%%
 
 #slope
 #!!! beware of numberical instability caused by a slope to large compare to delta x, 
@@ -91,14 +102,6 @@ alpha = np.convolve(alpha_raw, kernel, mode='same')
 # 1. always take the smaller timestep between delta slope and delta H
 #2. always take a timestep that will create a small enough ice motion compare to delta x
 
-
-#
-taub = rho_ice *g*H*alpha
-
-us = (ub + 2*A/(n+1) *taub**n *H)*3600*24
-us_approx = H**4 *alpha**3#*3600*24
-
-#%%
 number = 3
 fig,ax = plt.subplots(number, sharex=True)
 
@@ -109,8 +112,22 @@ ax[0].axvspan(lake_area[0],lake_area[len(lake_area)-1], alpha=0.3, color='cyan',
 ax[0].axvspan(radar_area[0],radar_area[len(radar_area)-1], alpha=0.3, color='grey', label='radar extent')
 ax[0].set_ylabel('(m.a.s.l.)')
 
-ax[1].plot(profile.distance,profile.promice_velocity_mperday*365, label='promice velocity', color='purple')  
-ax[1].plot(profile.distance,us*365, label='calculated velocity', color='magenta')  
+ax[1].plot(profile.distance,profile.promice_velocity_mperday*365, label='promice velocity', color='purple', linestyle='--')
+
+color=plt.cm.PuRd(np.linspace(0,1,len(cuffey.A)))
+
+
+for i,A in enumerate(cuffey.A):
+#
+    taub = rho_ice *g*H*alpha
+    temperature = cuffey['T'][i]
+    
+    surface_velocity =  (ub + 2*A/(n+1) *taub**n *H)*3600*24 
+    #column[i]='T='+str(cuffey['T'])
+    #us_approx= H**4 *alpha**3#*3600*24
+
+    ax[1].plot(profile.distance,surface_velocity*365, label='A (%s°C)'%temperature, color=color[i])  
+    
 #ax[1].plot(profile.distance,us_approx, label='aproximated velocity', color='pink')  
 ax[1].axvspan(lake_area[0],lake_area[len(lake_area)-1], alpha=0.3, color='cyan')
 ax[1].axvspan(radar_area[0],radar_area[len(radar_area)-1], alpha=0.3, color='grey')
@@ -119,14 +136,14 @@ ax[1].set_ylabel('(m/year)')
 
 
 ax[2].plot(profile.distance, alpha_raw, label='slope')
-ax[2].plot(profile.distance, alpha, label='smoothed slope')
+ax[2].plot(profile.distance, alpha, label='smoothed slope (window 600m)')
 ax[2].axvspan(lake_area[0],lake_area[len(lake_area)-1], alpha=0.3, color='cyan')
 ax[2].axvspan(radar_area[0],radar_area[len(radar_area)-1], alpha=0.3, color='grey')
 ax[2].set_ylabel('(-)')
 
 ax[2].set_xlabel('Distance from ice divide (m)')
 
-for n in np.arange(number):
-    ax[n].legend()
+for i in np.arange(number):
+    ax[i].legend(prop={'size': 6})
 
 
