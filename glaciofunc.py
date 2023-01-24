@@ -5,6 +5,15 @@ Created on Thu Nov 17 12:31:56 2022
 @author: trunzc
 """
 
+
+#!!! To enable gdal to run without issues, you need to create an environement through the conda prompt
+# run this line: (gdal_env is the name you give it. this can be changed)
+#   > conda create -n gdal_env python=3.6 gdal matplotlib netCDF4 seaborn pandas astropy spyder
+#   > conda activate gdal_env
+#   > sypder
+
+
+
 #extract data on flow line path
 from astropy.io import fits
 from astropy.utils.data import get_pkg_data_filename
