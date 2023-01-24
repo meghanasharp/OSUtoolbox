@@ -71,6 +71,10 @@ gps_rover['z_arcticdem'] = get_data_from_profile(gps_rover, arcticdem_10m, 'grid
 gps_rover['z_diff_arcticdem'] = gps_rover.z_arcticdem - gps_rover.ellipsoida
 
 
+#save data to csv
+gps_rover.to_csv('gps_rover_vs_arcticdem.csv')
+
+
 # #diff_gps_rover_bedmachine
 
 # gps_hh['z_bedmachine'] = get_data_from_profile(gps_hh, bedmachine, 'surface')
@@ -210,6 +214,8 @@ plt.xlabel('Diff arctic dem and precision gps (m)')
 x = gps_rover.easting
 y = gps_rover.northing
 z = gps_rover.z_diff_arcticdem
+
+
 
 #heatmap, xedges, yedges = np.histogram2d(x, y, bins=50)
 extent = [xedges[0], xedges[-1], yedges[0], yedges[-1]]
