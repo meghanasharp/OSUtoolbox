@@ -263,7 +263,10 @@ table = pd.read_csv("/home/kirillivanov/Codes/Toolbox/time_shift_for_lines.csv")
 radar['shift'] = ''
 for i,timeshift in enumerate(table.time_shift):
     selection = (radar['File Name'] == table.file_name[i]) & (radar['Line Name'] == table.line_name[i])
-    radar['shift'][selection] = radar[selection].index + timedelta(hours=timeshift) - timedelta(minutes=3.5)
+    if table.broken[i] == 1:
+        #check the time it broke and separate the shift in radar table according to shfit
+    else:
+        radar['shift'][selection] = radar[selection].index + timedelta(hours=timeshift) - timedelta(minutes=3.5)
 radar = radar.set_index('shift')
 
 #%% KI --- plot by file and color by lines
