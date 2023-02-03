@@ -283,9 +283,22 @@ for file_name in file_names:
     ax.set_ylim(-525000,-510000)
     ax.set_ylabel('(m)')
     ax.legend(fontsize=15)
-
-
-
+#%% KI --- get file names and line names to csv file 
+# File Name | Line Name | time shift (filled manually)
+f_name =  []
+l_name = []
+for a in file_names:
+    index = radar['File Name'] == a
+    line_names = radar[index]['Line Name'].unique()
+    f_name = np.append(f_name,np.full((len(line_names),),a))
+    for b in line_names:
+        l_name = np.append(l_name,b)
+tsh = np.zeros((len(f_name),))
+table = {'file_name': f_name,
+         'line_name': l_name,
+         'time_shift': tsh}
+df = pd.DataFrame(data = table, index = None)
+df.to_csv('time_shift_for_lines.csv')
 ##############################################################################
 #%% interpolate z radar from GPS data
 ##############################################################################
