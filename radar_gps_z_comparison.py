@@ -257,8 +257,32 @@ for file_name in file_names:
 #     #ax[2].legend()
 #     #plt.savefig('radar_comparison_Line_%s'%file_name)
 
+#%% KI --- plot by file and color by lines 
+file_names = radar['File Name'].unique()
+colors = ['aqua', 'beige', 'blue', 'darkgreen', 'ivory',
+          'lime', 'magenta', 'orange', 'plum', 'red',
+          'purple','silver','yellow','yellowgreen']
 
+for file_name in file_names:
+    index = radar['File Name'] == file_name
 
+    fig,ax = plt.subplots(1, sharex=True, figsize=(40,20))
+    fig.suptitle('File %s'%file_name)
+    date_range = [pd.to_datetime('2022-08-11 00:00'),pd.to_datetime('2022-08-26 00:00')]
+    
+    ax.set_title('EASTING')
+    ax.plot(gps_rover.index, gps_rover['easting'], marker='o',linestyle='',label='gps - rover', color='black') # - timedelta(hours=24)
+    ax.plot(gps_hh.index, gps_hh['easting'], marker='.',linestyle='',label='gps - hand held', color='grey')
+    
+    line_name = radar[index]['Line Name'].unique()
+    for line_name in line_name:
+        sub_index = (radar['File Name'] == file_name)&(radar['Line Name'] == line_name)
+        ax.plot(radar.index[sub_index] ,radar['easting'][sub_index],marker='.',linestyle='',label=line_name, color=np.random.choice(colors))
+    
+    ax.set_xlim(date_range)
+    ax.set_ylim(-525000,-510000)
+    ax.set_ylabel('(m)')
+    ax.legend(fontsize=15)
 
 
 
