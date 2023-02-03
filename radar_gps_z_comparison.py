@@ -83,8 +83,8 @@ gps_hh = gps_hh[gps_hh.easting>-540000]
 #the timezone of the data is unknown. the radar time is 19h behind the GPS time
 #and the radar is a few meter behind the GPS, so we substract 3.5 min, 
 #which seems to best fit the time it takes the radar to be at the same position as the GPS based on easting position
-radar['index_original'] = radar.index
-radar.index = radar.index + timedelta(hours=19) - timedelta(minutes=3.5)
+#radar['index_original'] = radar.index
+#radar.index = radar.index + timedelta(hours=19) - timedelta(minutes=3.5)
 
 
 #%% plot correction comparison
@@ -256,6 +256,21 @@ for file_name in file_names:
 #     ax[2].set_ylabel('(m.a.s.l.)')
 #     #ax[2].legend()
 #     #plt.savefig('radar_comparison_Line_%s'%file_name)
+
+#%% KI --- re-indexing each line separatly 
+time_shift = pd.read_csv("C:/Users/kiril/Desktop/college/oregon/ThesisM/Toolbox/time_shift_for_lines.csv")
+#change path for G drive 
+#radar.index = radar.index_original #switch back to pre-shifted times
+radar['index_original'] = radar.index
+file_names = radar['File Name'].unique()
+for file_name in file_names:
+    index = radar['File Name'] == file_name
+    line_name = radar[index]['Line Name'].unique()
+    for line_name in line_name:
+        mask = (time_shift.file_name == file_name)&(time_shift.line_name == line_name)
+        shift = int(time_shift[mask].time_shift)
+        sub_index = (radar['File Name'] == file_name)&(radar['Line Name'] == line_name)
+        radar[sub_index].index = radar[sub_index].index + timedelta(hours=shift) - timedelta(minutes=3.5)
 
 #%% KI --- plot by file and color by lines 
 file_names = radar['File Name'].unique()
