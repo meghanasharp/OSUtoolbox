@@ -77,6 +77,37 @@ gps_rover = gps_rover[gps_rover.easting>-540000]
 gps_hh = gps_hh[gps_hh.easting<-500000]
 gps_hh = gps_hh[gps_hh.easting>-540000]
 
+
+
+#%% KI --- time shifting each line separatly
+#the timezone of the data is unknown. the radar time is 19h behind the GPS time
+#and the radar is a few meter behind the GPS, so we substract 3.5 min,
+#which seems to best fit the time it takes the radar to be at the same position as the GPS based on easting position
+
+table = pd.read_csv('G:/Shared drives/6 Greenland Europa Hiawatha Projects/Lake Europa/Radar/time_shift_for_lines.csv')
+radar['index_shift'] = ''
+for i,timeshift in enumerate(table.time_shift):
+    selection = (radar['File Name'] == table.file_name[i]) & (radar['Line Name'] == table.line_name[i])
+    if table.broken[i] == 0:
+        radar.loc[selection, 'index_shift'] = radar.index[selection] + timedelta(hours=timeshift) - timedelta(minutes=3.5)
+    if table.broken[i] == 1:
+        # #check the time it broke and separate the shift in radar table according to shfit
+        mask = radar.index[selection] > pd.to_datetime(table.broken_time[i])
+        radar['index_shift'][selection][mask] = radar.index[selection][mask] + timedelta(hours=table.time_shift_2[i]) - timedelta(minutes=3.5)
+        radar['index_shift'][selection][~mask] = radar.index[selection][~mask] + timedelta(hours=timeshift) - timedelta(minutes=3.5)
+
+    #else:
+        
+    #     #check the time it broke and separate the shift in radar table according to shfit
+    #     mask = radar.index[selection] > pd.to_datetime(table.broken_time[i])
+    #     radar['shift'][selection][mask] = radar.index[selection][mask] + timedelta(hours=table.time_shift_2[i]) - timedelta(minutes=3.5)
+    #     radar['shift'][selection][~mask] = radar.index[selection][~mask] + timedelta(hours=timeshift) - timedelta(minutes=3.5)
+    # else:
+    #     radar['shift'][selection] = radar.index[selection] + timedelta(hours=timeshift) - timedelta(minutes=3.5)
+        
+#radar = radar.set_index('shift')
+
+
 #%% plot correction comparison
 fig,ax = plt.subplots(3, sharex=True, figsize=(40,20))
 
@@ -84,8 +115,8 @@ date_range = [pd.to_datetime('2022-08-11 00:00'),pd.to_datetime('2022-08-23 00:0
 
 ax[0].set_title('EASTING')
 ax[0].plot(gps_rover.index, gps_rover['easting'], marker='o',linestyle='',label='gps - rover', color='black')
-ax[0].plot(radar.index_original ,radar['easting'],marker='.',linestyle='',label='radar - original', color='orangered' )
-ax[0].plot(radar.index ,radar['easting'],marker='.',linestyle='',label='radar - corrected', color='orange')
+ax[0].plot(radar.index ,radar['easting'],marker='.',linestyle='',label='radar - original', color='orangered' )
+ax[0].plot(radar.index_shift ,radar['easting'],marker='.',linestyle='',label='radar - corrected', color='orange')
 
 ax[0].set_xlim(date_range)
 ax[0].set_ylim(-525000,-510000)
@@ -94,8 +125,8 @@ ax[0].legend(fontsize=15)
 
 ax[1].set_title('NORTHING')
 ax[1].plot(gps_rover.index, gps_rover['northing'], marker='o',linestyle='',label='gps - rover', color='black')
-ax[1].plot(radar.index_original ,radar['northing'],marker='.',linestyle='',label='radar - original', color='orangered')
-ax[1].plot(radar.index ,radar['northing'],marker='.',linestyle='',label='radar - corrected', color='orange')
+ax[1].plot(radar.index ,radar['northing'],marker='.',linestyle='',label='radar - original', color='orangered')
+ax[1].plot(radar.index_shift ,radar['northing'],marker='.',linestyle='',label='radar - corrected', color='orange')
 
 ax[1].set_xlim(date_range)
 ax[1].set_ylim(-1198000,-1180000)
@@ -104,93 +135,201 @@ ax[1].set_ylabel('(m)')
 
 ax[2].set_title('ELEVATION')
 ax[2].plot(gps_rover.index, gps_rover['ellipsoida'], marker='o',linestyle='',label='gps - rover', color='black')
-ax[2].plot(radar.index_original ,radar['Z - Elevat'],marker='.',linestyle='',label='radar - original', color='orangered')
-ax[2].plot(radar.index ,radar['Z - Elevat'],marker='.',linestyle='',label='radar - corrected', color='orange')
+ax[2].plot(radar.index ,radar['Z - Elevat'],marker='.',linestyle='',label='radar - original', color='orangered')
+ax[2].plot(radar.index_shift ,radar['Z - Elevat'],marker='.',linestyle='',label='radar - corrected', color='orange')
 
 ax[2].set_xlim(date_range)
 #ax[2].set_ylim(-525000,-510000)
 ax[2].set_ylabel('(m.a.s.l.)')
-#ax[2].legend()
-
-#%% plot to Compare GPS and RADAR values in function of time
-fig,ax = plt.subplots(3, sharex=True, figsize=(40,20))
-
-date_range = [pd.to_datetime('2022-08-11 00:00'),pd.to_datetime('2022-08-23 00:00')]
-
-ax[0].set_title('EASTING')
-ax[0].plot(gps_rover.index, gps_rover['easting'], marker='o',linestyle='',label='gps - rover', color='black') # - timedelta(hours=24)
-ax[0].plot(gps_hh.index, gps_hh['easting'], marker='.',linestyle='',label='gps - hand held', color='grey')
-ax[0].plot(radar.index ,radar['easting'],marker='.',linestyle='',label='radar', color='orange')
-
-ax[0].set_xlim(date_range)
-ax[0].set_ylim(-525000,-510000)
-ax[0].set_ylabel('(m)')
-ax[0].legend(fontsize=15)
-
-ax[1].set_title('NORTHING')
-ax[1].plot(gps_rover.index, gps_rover['northing'], marker='o',linestyle='',label='gps - rover', color='black') # - timedelta(hours=24)
-ax[1].plot(gps_hh.index, gps_hh['northing'], marker='.',linestyle='',label='gps - hand held', color='grey')
-ax[1].plot(radar.index ,radar['northing'],marker='.',linestyle='',label='radar', color='orange')
-
-ax[1].set_xlim(date_range)
-ax[1].set_ylim(-1198000,-1180000)
-ax[1].set_ylabel('(m)')
-#ax[1].legend()
-# difference between bedmachine and gps data
-
-ax[2].set_title('ELEVATION')
-ax[2].plot(gps_rover.index, gps_rover['ellipsoida'], marker='o',linestyle='',label='gps - rover', color='black') # - timedelta(hours=24)
-ax[2].plot(gps_hh.index, gps_hh['ele'], marker='.',linestyle='',label='gps - hand held', color='grey')
-ax[2].plot(radar.index ,radar['Z - Elevat'],marker='.',linestyle='',label='radar', color='orange')
-
-ax[2].set_xlim(date_range)
-#ax[2].set_ylim(-525000,-510000)
-ax[2].set_ylabel('(m.a.s.l.)')
-#ax[2].legend()
+# #ax[2].legend()
 
 
-#%% plot by files
-
+#%% KI --- plot by file and color by lines
 file_names = radar['File Name'].unique()
+colors = ['aqua', 'beige', 'blue', 'darkgreen', 'ivory',
+          'lime', 'magenta', 'orange', 'plum', 'red',
+          'purple','silver','yellow','yellowgreen']
 
 for file_name in file_names:
     index = radar['File Name'] == file_name
 
-    fig,ax = plt.subplots(3, sharex=True, figsize=(40,20))
+    fig,ax = plt.subplots(1, sharex=True, figsize=(40,20))
     fig.suptitle('File %s'%file_name)
     date_range = [pd.to_datetime('2022-08-11 00:00'),pd.to_datetime('2022-08-26 00:00')]
 
-    ax[0].set_title('EASTING')
-    ax[0].plot(gps_rover.index, gps_rover['easting'], marker='o',linestyle='',label='gps - rover', color='black') # - timedelta(hours=24)
-    ax[0].plot(gps_hh.index, gps_hh['easting'], marker='.',linestyle='',label='gps - hand held', color='grey')
-    ax[0].plot(radar.index[index] ,radar['easting'][index],marker='.',linestyle='',label='radar', color='orange')
+    ax.set_title('EASTING')
+    ax.plot(gps_rover.index, gps_rover['easting'], marker='o',linestyle='',label='gps - rover', color='black') # - timedelta(hours=24)
+    ax.plot(gps_hh.index, gps_hh['easting'], marker='.',linestyle='',label='gps - hand held', color='black')
+    ax.plot(radar.index, radar['easting'], marker='o', linestyle='',label='radar-orginal', color='grey')
 
-    ax[0].set_xlim(date_range)
-    ax[0].set_ylim(-525000,-510000)
-    ax[0].set_ylabel('(m)')
-    ax[0].legend(fontsize=15)
+    line_name = radar[index]['Line Name'].unique()
+    for line_name in line_name:
+        sub_index = (radar['File Name'] == file_name)&(radar['Line Name'] == line_name)
+        ax.plot(radar.index_shift[sub_index] ,radar['easting'][sub_index],marker='.',linestyle='',label=line_name, color=np.random.choice(colors))
 
-    ax[1].set_title('NORTHING')
-    ax[1].plot(gps_rover.index, gps_rover['northing'], marker='o',linestyle='',label='gps - rover', color='black') # - timedelta(hours=24)
-    ax[1].plot(gps_hh.index, gps_hh['northing'], marker='.',linestyle='',label='gps - hand held', color='grey')
-    ax[1].plot(radar.index[index] ,radar['northing'][index],marker='.',linestyle='',label='radar', color='orange')
+    ax.set_xlim(date_range)
+    ax.set_ylim(-525000,-510000)
+    ax.set_ylabel('(m)')
+    ax.legend(fontsize=15)
+    
+    
+#%% KI --- get file names and line names to csv file
+# File Name | Line Name | time shift (filled manually)
+f_name =  []
+l_name = []
+for a in file_names:
+    index = radar['File Name'] == a
+    line_names = radar[index]['Line Name'].unique()
+    f_name = np.append(f_name,np.full((len(line_names),),a))
+    for b in line_names:
+        l_name = np.append(l_name,b)
+tsh = np.zeros((len(f_name),))
+table = {'file_name': f_name,
+         'line_name': l_name,
+         'time_shift': tsh}
+df = pd.DataFrame(data = table, index = None)
+df.to_csv('time_shift_for_lines.csv')
+##############################################################################
+#%% interpolate z radar from GPS data
+##############################################################################
+# this needs to be refined to prevent data interpolation in area with no data
 
-    ax[1].set_xlim(date_range)
-    ax[1].set_ylim(-1198000,-1180000)
-    ax[1].set_ylabel('(m)')
-    #ax[1].legend()
-    # difference between bedmachine and gps data
 
-    ax[2].set_title('ELEVATION')
-    ax[2].plot(gps_rover.index, gps_rover['ellipsoida'], marker='o',linestyle='',label='gps - rover', color='black') # - timedelta(hours=24)
-    ax[2].plot(gps_hh.index, gps_hh['ele'], marker='.',linestyle='',label='gps - hand held', color='grey')
-    ax[2].plot(radar.index[index] ,radar['Z - Elevat'][index],marker='.',linestyle='',label='radar', color='orange')
+radar['z_gps'] = np.interp(radar.index,
+                        gps_rover.index,
+                        gps_rover.ellipsoida)
 
-    ax[2].set_xlim(date_range)
-    #ax[2].set_ylim(-525000,-510000)
-    ax[2].set_ylabel('(m.a.s.l.)')
-    #ax[2].legend()
-    #plt.savefig('radar_comparison_Line_%s'%file_name)
+fig,ax = plt.subplots()
+
+date_range = [pd.to_datetime('2022-08-11 00:00'),pd.to_datetime('2022-08-23 00:00')]
+
+ax.plot(radar.index ,radar['Z - Elevat'],marker='.',linestyle='',label='z from radar')
+ax.plot(radar.index ,radar['z_gps'],marker='.',linestyle='',label='z from GPS rover')
+
+
+ax.set_xlim(date_range)
+#ax[0].set_ylim(-525000,-510000)
+ax.set_ylabel('m.a.s.l')
+ax.legend()
+
+
+
+
+
+# #%% plot correction comparison
+# fig,ax = plt.subplots(3, sharex=True, figsize=(40,20))
+
+# date_range = [pd.to_datetime('2022-08-11 00:00'),pd.to_datetime('2022-08-23 00:00')]
+
+# ax[0].set_title('EASTING')
+# ax[0].plot(gps_rover.index, gps_rover['easting'], marker='o',linestyle='',label='gps - rover', color='black')
+# ax[0].plot(radar.index_original ,radar['easting'],marker='.',linestyle='',label='radar - original', color='orangered' )
+# ax[0].plot(radar.index ,radar['easting'],marker='.',linestyle='',label='radar - corrected', color='orange')
+
+# ax[0].set_xlim(date_range)
+# ax[0].set_ylim(-525000,-510000)
+# ax[0].set_ylabel('(m)')
+# ax[0].legend(fontsize=15)
+
+# ax[1].set_title('NORTHING')
+# ax[1].plot(gps_rover.index, gps_rover['northing'], marker='o',linestyle='',label='gps - rover', color='black')
+# ax[1].plot(radar.index_original ,radar['northing'],marker='.',linestyle='',label='radar - original', color='orangered')
+# ax[1].plot(radar.index ,radar['northing'],marker='.',linestyle='',label='radar - corrected', color='orange')
+
+# ax[1].set_xlim(date_range)
+# ax[1].set_ylim(-1198000,-1180000)
+# ax[1].set_ylabel('(m)')
+# #ax[1].legend()
+
+# ax[2].set_title('ELEVATION')
+# ax[2].plot(gps_rover.index, gps_rover['ellipsoida'], marker='o',linestyle='',label='gps - rover', color='black')
+# ax[2].plot(radar.index_original ,radar['Z - Elevat'],marker='.',linestyle='',label='radar - original', color='orangered')
+# ax[2].plot(radar.index ,radar['Z - Elevat'],marker='.',linestyle='',label='radar - corrected', color='orange')
+
+# ax[2].set_xlim(date_range)
+# #ax[2].set_ylim(-525000,-510000)
+# ax[2].set_ylabel('(m.a.s.l.)')
+# #ax[2].legend()
+
+# #%% plot to Compare GPS and RADAR values in function of time
+# fig,ax = plt.subplots(3, sharex=True, figsize=(40,20))
+
+# date_range = [pd.to_datetime('2022-08-11 00:00'),pd.to_datetime('2022-08-23 00:00')]
+
+# ax[0].set_title('EASTING')
+# ax[0].plot(gps_rover.index, gps_rover['easting'], marker='o',linestyle='',label='gps - rover', color='black') # - timedelta(hours=24)
+# ax[0].plot(gps_hh.index, gps_hh['easting'], marker='.',linestyle='',label='gps - hand held', color='grey')
+# ax[0].plot(radar.index ,radar['easting'],marker='.',linestyle='',label='radar', color='orange')
+
+# ax[0].set_xlim(date_range)
+# ax[0].set_ylim(-525000,-510000)
+# ax[0].set_ylabel('(m)')
+# ax[0].legend(fontsize=15)
+
+# ax[1].set_title('NORTHING')
+# ax[1].plot(gps_rover.index, gps_rover['northing'], marker='o',linestyle='',label='gps - rover', color='black') # - timedelta(hours=24)
+# ax[1].plot(gps_hh.index, gps_hh['northing'], marker='.',linestyle='',label='gps - hand held', color='grey')
+# ax[1].plot(radar.index ,radar['northing'],marker='.',linestyle='',label='radar', color='orange')
+
+# ax[1].set_xlim(date_range)
+# ax[1].set_ylim(-1198000,-1180000)
+# ax[1].set_ylabel('(m)')
+# #ax[1].legend()
+# # difference between bedmachine and gps data
+
+# ax[2].set_title('ELEVATION')
+# ax[2].plot(gps_rover.index, gps_rover['ellipsoida'], marker='o',linestyle='',label='gps - rover', color='black') # - timedelta(hours=24)
+# ax[2].plot(gps_hh.index, gps_hh['ele'], marker='.',linestyle='',label='gps - hand held', color='grey')
+# ax[2].plot(radar.index ,radar['Z - Elevat'],marker='.',linestyle='',label='radar', color='orange')
+
+# ax[2].set_xlim(date_range)
+# #ax[2].set_ylim(-525000,-510000)
+# ax[2].set_ylabel('(m.a.s.l.)')
+# #ax[2].legend()
+
+
+# #%% plot by files
+
+# file_names = radar['File Name'].unique()
+
+# for file_name in file_names:
+#     index = radar['File Name'] == file_name
+
+#     fig,ax = plt.subplots(3, sharex=True, figsize=(40,20))
+#     fig.suptitle('File %s'%file_name)
+#     date_range = [pd.to_datetime('2022-08-11 00:00'),pd.to_datetime('2022-08-26 00:00')]
+
+#     ax[0].set_title('EASTING')
+#     ax[0].plot(gps_rover.index, gps_rover['easting'], marker='o',linestyle='',label='gps - rover', color='black') # - timedelta(hours=24)
+#     ax[0].plot(gps_hh.index, gps_hh['easting'], marker='.',linestyle='',label='gps - hand held', color='grey')
+#     ax[0].plot(radar.index[index] ,radar['easting'][index],marker='.',linestyle='',label='radar', color='orange')
+
+#     ax[0].set_xlim(date_range)
+#     ax[0].set_ylim(-525000,-510000)
+#     ax[0].set_ylabel('(m)')
+#     ax[0].legend(fontsize=15)
+
+#     ax[1].set_title('NORTHING')
+#     ax[1].plot(gps_rover.index, gps_rover['northing'], marker='o',linestyle='',label='gps - rover', color='black') # - timedelta(hours=24)
+#     ax[1].plot(gps_hh.index, gps_hh['northing'], marker='.',linestyle='',label='gps - hand held', color='grey')
+#     ax[1].plot(radar.index[index] ,radar['northing'][index],marker='.',linestyle='',label='radar', color='orange')
+
+#     ax[1].set_xlim(date_range)
+#     ax[1].set_ylim(-1198000,-1180000)
+#     ax[1].set_ylabel('(m)')
+#     #ax[1].legend()
+#     # difference between bedmachine and gps data
+
+#     ax[2].set_title('ELEVATION')
+#     ax[2].plot(gps_rover.index, gps_rover['ellipsoida'], marker='o',linestyle='',label='gps - rover', color='black') # - timedelta(hours=24)
+#     ax[2].plot(gps_hh.index, gps_hh['ele'], marker='.',linestyle='',label='gps - hand held', color='grey')
+#     ax[2].plot(radar.index[index] ,radar['Z - Elevat'][index],marker='.',linestyle='',label='radar', color='orange')
+
+#     ax[2].set_xlim(date_range)
+#     #ax[2].set_ylim(-525000,-510000)
+#     ax[2].set_ylabel('(m.a.s.l.)')
+#     #ax[2].legend()
+#     #plt.savefig('radar_comparison_Line_%s'%file_name)
 
 
 
@@ -246,95 +385,6 @@ for file_name in file_names:
 #     ax[2].set_ylabel('(m.a.s.l.)')
 #     #ax[2].legend()
 #     #plt.savefig('radar_comparison_Line_%s'%file_name)
-
-#%% KI --- time shifting each line separatly
-#the timezone of the data is unknown. the radar time is 19h behind the GPS time
-#and the radar is a few meter behind the GPS, so we substract 3.5 min,
-#which seems to best fit the time it takes the radar to be at the same position as the GPS based on easting position
-
-table = pd.read_csv('G:/Shared drives/6 Greenland Europa Hiawatha Projects/Lake Europa/Radar/time_shift_for_lines.csv')
-radar['shift'] = ''
-for i,timeshift in enumerate(table.time_shift):
-    selection = (radar['File Name'] == table.file_name[i]) & (radar['Line Name'] == table.line_name[i])
-    if table.broken[i] == 1:
-        #check the time it broke and separate the shift in radar table according to shfit
-        mask = radar.index[selection] > pd.to_datetime(table.broken_time[i])
-        radar['shift'][selection][mask] = radar.index[selection][mask] + timedelta(hours=table.time_shift_2[i]) - timedelta(minutes=3.5)
-        radar['shift'][selection][~mask] = radar.index[selection][~mask] + timedelta(hours=timeshift) - timedelta(minutes=3.5)
-    else:
-        radar['shift'][selection] = radar.index[selection] + timedelta(hours=timeshift) - timedelta(minutes=3.5)
-radar = radar.set_index('shift')
-
-#%% KI --- plot by file and color by lines
-file_names = radar['File Name'].unique()
-colors = ['aqua', 'beige', 'blue', 'darkgreen', 'ivory',
-          'lime', 'magenta', 'orange', 'plum', 'red',
-          'purple','silver','yellow','yellowgreen']
-
-for file_name in file_names:
-    index = radar['File Name'] == file_name
-
-    fig,ax = plt.subplots(1, sharex=True, figsize=(40,20))
-    fig.suptitle('File %s'%file_name)
-    date_range = [pd.to_datetime('2022-08-11 00:00'),pd.to_datetime('2022-08-26 00:00')]
-
-    ax.set_title('EASTING')
-    ax.plot(gps_rover.index, gps_rover['easting'], marker='o',linestyle='',label='gps - rover', color='black') # - timedelta(hours=24)
-    ax.plot(gps_hh.index, gps_hh['easting'], marker='.',linestyle='',label='gps - hand held', color='grey')
-
-    line_name = radar[index]['Line Name'].unique()
-    for line_name in line_name:
-        sub_index = (radar['File Name'] == file_name)&(radar['Line Name'] == line_name)
-        ax.plot(radar.index[sub_index] ,radar['easting'][sub_index],marker='.',linestyle='',label=line_name, color=np.random.choice(colors))
-
-    ax.set_xlim(date_range)
-    ax.set_ylim(-525000,-510000)
-    ax.set_ylabel('(m)')
-    ax.legend(fontsize=15)
-#%% KI --- get file names and line names to csv file
-# File Name | Line Name | time shift (filled manually)
-f_name =  []
-l_name = []
-for a in file_names:
-    index = radar['File Name'] == a
-    line_names = radar[index]['Line Name'].unique()
-    f_name = np.append(f_name,np.full((len(line_names),),a))
-    for b in line_names:
-        l_name = np.append(l_name,b)
-tsh = np.zeros((len(f_name),))
-table = {'file_name': f_name,
-         'line_name': l_name,
-         'time_shift': tsh}
-df = pd.DataFrame(data = table, index = None)
-df.to_csv('time_shift_for_lines.csv')
-##############################################################################
-#%% interpolate z radar from GPS data
-##############################################################################
-# this needs to be refined to prevent data interpolation in area with no data
-
-
-radar['z_gps'] = np.interp(radar.index,
-                        gps_rover.index,
-                        gps_rover.ellipsoida)
-
-fig,ax = plt.subplots()
-
-date_range = [pd.to_datetime('2022-08-11 00:00'),pd.to_datetime('2022-08-23 00:00')]
-
-ax.plot(radar.index ,radar['Z - Elevat'],marker='.',linestyle='',label='z from radar')
-ax.plot(radar.index ,radar['z_gps'],marker='.',linestyle='',label='z from GPS rover')
-
-
-ax.set_xlim(date_range)
-#ax[0].set_ylim(-525000,-510000)
-ax.set_ylabel('m.a.s.l')
-ax.legend()
-
-
-
-
-
-
 
 
 
