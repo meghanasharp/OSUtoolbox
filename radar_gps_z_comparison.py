@@ -77,16 +77,6 @@ gps_rover = gps_rover[gps_rover.easting>-540000]
 gps_hh = gps_hh[gps_hh.easting<-500000]
 gps_hh = gps_hh[gps_hh.easting>-540000]
 
-##############################################################################
-# fix radar time index shift
-##############################################################################
-#the timezone of the data is unknown. the radar time is 19h behind the GPS time
-#and the radar is a few meter behind the GPS, so we substract 3.5 min,
-#which seems to best fit the time it takes the radar to be at the same position as the GPS based on easting position
-#radar['index_original'] = radar.index
-#radar.index = radar.index + timedelta(hours=19) - timedelta(minutes=3.5)
-
-
 #%% plot correction comparison
 fig,ax = plt.subplots(3, sharex=True, figsize=(40,20))
 
@@ -257,16 +247,22 @@ for file_name in file_names:
 #     #ax[2].legend()
 #     #plt.savefig('radar_comparison_Line_%s'%file_name)
 
-#%% KI --- re-indexing each line separatly
-table = pd.read_csv("/home/kirillivanov/Codes/Toolbox/time_shift_for_lines.csv")
-#change path for G drive
+#%% KI --- time shifting each line separatly
+#the timezone of the data is unknown. the radar time is 19h behind the GPS time
+#and the radar is a few meter behind the GPS, so we substract 3.5 min,
+#which seems to best fit the time it takes the radar to be at the same position as the GPS based on easting position
+
+table = pd.read_csv('G:/Shared drives/6 Greenland Europa Hiawatha Projects/Lake Europa/Radar/time_shift_for_lines.csv')
 radar['shift'] = ''
 for i,timeshift in enumerate(table.time_shift):
     selection = (radar['File Name'] == table.file_name[i]) & (radar['Line Name'] == table.line_name[i])
     if table.broken[i] == 1:
         #check the time it broke and separate the shift in radar table according to shfit
+        mask = radar.index[selection] > pd.to_datetime(table.broken_time[i])
+        radar['shift'][selection][mask] = radar.index[selection][mask] + timedelta(hours=table.time_shift_2[i]) - timedelta(minutes=3.5)
+        radar['shift'][selection][~mask] = radar.index[selection][~mask] + timedelta(hours=timeshift) - timedelta(minutes=3.5)
     else:
-        radar['shift'][selection] = radar[selection].index + timedelta(hours=timeshift) - timedelta(minutes=3.5)
+        radar['shift'][selection] = radar.index[selection] + timedelta(hours=timeshift) - timedelta(minutes=3.5)
 radar = radar.set_index('shift')
 
 #%% KI --- plot by file and color by lines
