@@ -215,9 +215,9 @@ ax.legend()
 #create empty column to insert the provenance of the z data
 radar['z_interp_origin'] = ''
 # bolean index for the 1d interpolation where no rover data is available
-selection_1 = radar.index > pd.to_datetime('2022-08-21 20:00')
+selection_1 = radar.index_shift > pd.to_datetime('2022-08-21 20:00')
 #interpolate data along the radar timeserie using the rover gps z data
-radar['z_interp'] = np.interp(radar.index,
+radar['z_interp'] = np.interp(pd.to_datetime(radar.index_shift),
                         gps_rover.index,
                         gps_rover.ellipsoida)
 #remove interpolation values where not rover data is available
@@ -230,13 +230,13 @@ fig,ax = plt.subplots(figsize=(40,15))
 #
 date_range = [pd.to_datetime('2022-08-13 00:00'),pd.to_datetime('2022-08-25 00:00')]
 #ax.axvline(radar.index[radar.z_arcticdem.notna()].values, color = 'black')
-ax.plot(radar.index, radar.z_arcticdem, marker='o',linestyle='',label='Arctic DEM',color='black')
+ax.plot(radar.index_shift, radar.z_arcticdem, marker='o',linestyle='',label='Arctic DEM',color='black')
 ax.plot(gps_rover.index, gps_rover['ellipsoida'], marker='o',linestyle='',label='GPS rover',color='grey')
-ax.plot(radar.index ,radar['Z - Elevat'], marker='.',linestyle='',label='radar', color='cyan')
-ax.plot(radar.index[radar['z_interp_origin']=='GPS rover'] ,
+ax.plot(radar.index_shift ,radar['Z - Elevat'], marker='.',linestyle='',label='radar', color='cyan')
+ax.plot(radar.index_shift[radar['z_interp_origin']=='GPS rover'] ,
         radar.z_interp[radar['z_interp_origin']=='GPS rover'],
         marker='.',linestyle='',label='interpolated with rover', color='orangered')
-ax.plot(radar.index[radar['z_interp_origin']=='Arctic DEM 10m'] ,
+ax.plot(radar.index_shift[radar['z_interp_origin']=='Arctic DEM 10m'] ,
         radar.z_interp[radar['z_interp_origin']=='Arctic DEM 10m'],
         marker='.',linestyle='',label='interpolated with Arctic DEM', color='orange')
 ax.set_xlim(date_range)
