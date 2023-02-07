@@ -115,7 +115,7 @@ date_range = [pd.to_datetime('2022-08-11 00:00'),pd.to_datetime('2022-08-23 00:0
 
 ax[0].set_title('EASTING')
 ax[0].plot(gps_rover.index, gps_rover['easting'], marker='o',linestyle='',label='gps - rover', color='black')
-ax[0].plot(radar.index ,radar['easting'],marker='.',linestyle='',label='radar - original', color='orangered' )
+ax[0].plot(gps_hh.index, gps_hh['easting'], marker='.',linestyle='',label='gps - hand held', color='grey')
 ax[0].plot(radar.index_shift ,radar['easting'],marker='.',linestyle='',label='radar - corrected', color='orange')
 
 ax[0].set_xlim(date_range)
@@ -125,7 +125,7 @@ ax[0].legend(fontsize=15)
 
 ax[1].set_title('NORTHING')
 ax[1].plot(gps_rover.index, gps_rover['northing'], marker='o',linestyle='',label='gps - rover', color='black')
-ax[1].plot(radar.index ,radar['northing'],marker='.',linestyle='',label='radar - original', color='orangered')
+ax[1].plot(gps_hh.index, gps_hh['northing'], marker='.',linestyle='',label='gps - hand held', color='grey')
 ax[1].plot(radar.index_shift ,radar['northing'],marker='.',linestyle='',label='radar - corrected', color='orange')
 
 ax[1].set_xlim(date_range)
@@ -135,7 +135,7 @@ ax[1].set_ylabel('(m)')
 
 ax[2].set_title('ELEVATION')
 ax[2].plot(gps_rover.index, gps_rover['ellipsoida'], marker='o',linestyle='',label='gps - rover', color='black')
-ax[2].plot(radar.index ,radar['Z - Elevat'],marker='.',linestyle='',label='radar - original', color='orangered')
+ax[2].plot(gps_hh.index, gps_hh['ele'], marker='.',linestyle='',label='gps - hand held', color='grey')
 ax[2].plot(radar.index_shift ,radar['Z - Elevat'],marker='.',linestyle='',label='radar - corrected', color='orange')
 
 ax[2].set_xlim(date_range)
