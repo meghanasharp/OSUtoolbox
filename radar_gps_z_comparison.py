@@ -8,7 +8,7 @@ Created on Fri Nov 11 17:17:03 2022
 
 
 import pandas as pd
-import seaborn as sns
+#import seaborn as sns
 import matplotlib.pyplot as plt
 from datetime import timedelta
 import numpy as np
@@ -46,21 +46,24 @@ def plot_2D(x,y,z,
 
 
 # previous lake position
-lake = pd.read_csv('G:/Shared drives/6 Greenland Europa Hiawatha Projects/Lake Europa/Previous_dataset/naqlk_2014_water_detected.csv')
+lake = pd.read_csv('/home/kirillivanov/Codes/MS_thesis/naqlk_2014_water_detected.csv')
 
 # GPS data from the radar instrument. exported by Kirill
+
 radar = pd.read_csv('G:/Shared drives/6 Greenland Europa Hiawatha Projects/Lake Europa/Radar/radar_GPS_datetime_stereographic_2dinterp.csv',
+#radar = pd.read_csv('/home/kirillivanov/Codes/MS_thesis/radar_GPS_datetime_stereographic.csv',
+
                     index_col='datetime',
                     parse_dates=True)
 
 # GPS data from the precision GPS. processed by Celia
-gps_rover = pd.read_csv('G:/Shared drives/6 Greenland Europa Hiawatha Projects/Lake Europa/GPSdata_LakeEuropa/Precision_GPS_rover_lake_europa_2022.csv',
+gps_rover = pd.read_csv('/home/kirillivanov/Codes/MS_thesis/Precision_GPS_rover_lake_europa_2022.csv',
                    index_col='time_utc',
                    parse_dates=True)
 
 
 # GPS data fromt the hand held gps. comes from the combining of Christian and Georgia's GPS
-gps_hh = pd.read_csv('G:/Shared drives/6 Greenland Europa Hiawatha Projects/Lake Europa/GPSdata_LakeEuropa/HandHeld_GPS_rover_lake_europa_2022.csv',
+gps_hh = pd.read_csv('/home/kirillivanov/Codes/MS_thesis/HandHeld_GPS_rover_lake_europa_2022.csv',
                      index_col='time',
                      parse_dates=True)
 
@@ -140,6 +143,7 @@ for file_name in file_names:
     fig,ax = plt.subplots(1, sharex=True, figsize=(40,20))
     fig.suptitle('File %s'%file_name)
     date_range = [pd.to_datetime('2022-08-11 00:00'),pd.to_datetime('2022-08-26 00:00')]
+
 
     ax.set_title('EASTING')
     ax.plot(gps_rover.index, gps_rover['easting'], marker='o',linestyle='',label='gps - rover', color='black') # - timedelta(hours=24)
@@ -295,6 +299,9 @@ fig,ax = plt.subplots(figsize=(40,15))
 # for file_name in file_names:
 #     index = radar['File Name'] == file_name
 
+#     line_names = radar['Line Name'][index].unique()
+
+
 #     fig,ax = plt.subplots(3, sharex=True, figsize=(40,20))
 #     fig.suptitle('File %s'%file_name)
 #     date_range = [pd.to_datetime('2022-08-11 00:00'),pd.to_datetime('2022-08-26 00:00')]
@@ -324,6 +331,16 @@ fig,ax = plt.subplots(figsize=(40,15))
 #     ax[2].plot(gps_rover.index, gps_rover['ellipsoida'], marker='o',linestyle='',label='gps - rover', color='black') # - timedelta(hours=24)
 #     ax[2].plot(gps_hh.index, gps_hh['ele'], marker='.',linestyle='',label='gps - hand held', color='grey')
 #     ax[2].plot(radar.index[index] ,radar['Z - Elevat'][index],marker='.',linestyle='',label='radar', color='orange')
+
+
+
+#     color = cm.rainbow(np.linspace(0, 1, len(line_names)))
+#     for i,line_name in enumerate(line_names):
+#         index_index = radar['Line Name'][index]==line_name
+
+#         ax[0].plot(radar.index[index_index] ,radar['easting'][index_index],marker='.',linestyle='',label='radar', color=color[i])
+#         ax[1].plot(radar.index[index_index] ,radar['northing'][index_index],marker='.',linestyle='',label='radar', color=color[i])
+#         ax[2].plot(radar.index[index_index] ,radar['Z - Elevat'][index_index],marker='.',linestyle='',label='radar', color=color[i])
 
 #     ax[2].set_xlim(date_range)
 #     #ax[2].set_ylim(-525000,-510000)
@@ -385,7 +402,6 @@ fig,ax = plt.subplots(figsize=(40,15))
 #     ax[2].set_ylabel('(m.a.s.l.)')
 #     #ax[2].legend()
 #     #plt.savefig('radar_comparison_Line_%s'%file_name)
-
 
 
 
