@@ -91,23 +91,10 @@ for i,timeshift in enumerate(table.time_shift):
     if table.broken[i] == 0:
         radar.loc[selection, 'index_shift'] = radar.index[selection] + timedelta(hours=timeshift) - timedelta(minutes=3.5)
     if table.broken[i] == 1:
-        # #check the time it broke and separate the shift in radar table according to shfit
-        mask = radar.index[selection] > pd.to_datetime(table.broken_time[i])
-        radar['index_shift'][selection][mask] = radar.index[selection][mask] + timedelta(hours=table.time_shift_2[i]) - timedelta(minutes=3.5)
-        radar['index_shift'][selection][~mask] = radar.index[selection][~mask] + timedelta(hours=timeshift) - timedelta(minutes=3.5)
-
-    #else:
-
-    #     #check the time it broke and separate the shift in radar table according to shfit
-    #     mask = radar.index[selection] > pd.to_datetime(table.broken_time[i])
-    #     radar['shift'][selection][mask] = radar.index[selection][mask] + timedelta(hours=table.time_shift_2[i]) - timedelta(minutes=3.5)
-    #     radar['shift'][selection][~mask] = radar.index[selection][~mask] + timedelta(hours=timeshift) - timedelta(minutes=3.5)
-    # else:
-    #     radar['shift'][selection] = radar.index[selection] + timedelta(hours=timeshift) - timedelta(minutes=3.5)
-
-#radar = radar.set_index('shift')
-
-
+        sub_selection_1 = (radar['File Name'] == table.file_name[i]) & (radar['Line Name'] == table.line_name[i])&(radar.index > pd.to_datetime(table.broken_time[i]))
+        radar['index_shift'][sub_selection_1] = radar.index[sub_selection_1] + timedelta(hours=table.time_shift_2[i]) - timedelta(minutes=3.5)
+        sub_selection_2 = (radar['File Name'] == table.file_name[i]) & (radar['Line Name'] == table.line_name[i])&(radar.index < pd.to_datetime(table.broken_time[i]))
+        radar['index_shift'][sub_selection_2] = radar.index[sub_selection_2] + timedelta(hours=timeshift) - timedelta(minutes=3.5)
 #%% plot correction comparison
 fig,ax = plt.subplots(3, sharex=True, figsize=(40,20))
 
@@ -190,28 +177,6 @@ df.to_csv('time_shift_for_lines.csv')
 ##############################################################################
 #%% interpolate z radar from GPS data
 ##############################################################################
-# this needs to be refined to prevent data interpolation in area with no data
-
-
-radar['z_gps'] = np.interp(radar.index,
-                        gps_rover.index,
-                        gps_rover.ellipsoida)
-
-fig,ax = plt.subplots()
-
-date_range = [pd.to_datetime('2022-08-11 00:00'),pd.to_datetime('2022-08-23 00:00')]
-
-ax.plot(radar.index ,radar['Z - Elevat'],marker='.',linestyle='',label='z from radar')
-ax.plot(radar.index ,radar['z_gps'],marker='.',linestyle='',label='z from GPS rover')
-
-
-ax.set_xlim(date_range)
-#ax[0].set_ylim(-525000,-510000)
-ax.set_ylabel('m.a.s.l')
-ax.legend()
-
-#%% interpolate z radar from GPS data
-##############################################################################
 #create empty column to insert the provenance of the z data
 radar['z_interp_origin'] = ''
 # bolean index for the 1d interpolation where no rover data is available
@@ -243,9 +208,14 @@ ax.set_xlim(date_range)
 #ax[0].set_ylim(-525000,-510000)
 ax.set_ylabel('m.a.s.l')
 ax.legend()
+#%% KI - ArcticDEM uncertainty 
+# gps_rover elevation - arcticDEM elevation for uncertainty
+fig,ax = plt.subplots(figsize=(40,15))
+#%% KI -- Save File 
+##done
+#radar.to_csv('G:/Shared drives/6 Greenland Europa Hiawatha Projects/Lake Europa/Radar/radar_GPS_datetime_stereographic_2dinterp.csv')
 
-
-
+#%% old
 # #%% plot correction comparison
 # fig,ax = plt.subplots(3, sharex=True, figsize=(40,20))
 
