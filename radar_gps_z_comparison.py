@@ -113,7 +113,7 @@ ax[1].set_ylabel('(m)')
 #ax[1].legend()
 
 ax[2].set_title('ELEVATION')
-ax[2].plot(gps_rover.index, gps_rover['elx[selection]lipsoida'], marker='o',linestyle='',label='gps - rover', color='black')
+ax[2].plot(gps_rover.index, gps_rover['ellipsoida'], marker='o',linestyle='',label='gps - rover', color='black')
 ax[2].plot(radar.index_original ,radar['z_elev'],marker='.',linestyle='',label='radar - original', color='orangered')
 ax[2].plot(radar.index ,radar['z_elev'],marker='.',linestyle='',label='radar - corrected', color='orange')
 
@@ -295,7 +295,7 @@ ax.legend()
 fig,ax = plt.subplots(figsize=(40,15))
 #%% KI -- Save File
 ##done
-#radar.to_csv('G:/Shared drives/6 Greenland Europa Hiawatha Projects/Lake Europa/Radar/radar_GPS_datetime_stereographic_2dinterp.csv')
+#radar.to_csv('G:/Shared drives/6 Greenland Europa Hiawatha Projects/Lake Europa/Radar/radar_GPS_datetime_stereographic_2dinterp_final_z.csv')
 
 
 
