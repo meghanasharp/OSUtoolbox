@@ -46,21 +46,21 @@ def plot_2D(x,y,z,
 
 
 # previous lake position
-lake = pd.read_csv('/home/kirillivanov/Codes/MS_thesis/naqlk_2014_water_detected.csv')
+lake = pd.read_csv('G:/Shared drives/6 Greenland Europa Hiawatha Projects/Lake Europa/Previous_dataset/naqlk_2014_water_detected.csv')
 
 # GPS data from the radar instrument. exported by Kirill
-radar = pd.read_csv('/home/kirillivanov/Codes/MS_thesis/radar_GPS_datetime_stereographic_2dinterp.csv',
+radar = pd.read_csv('G:/Shared drives/6 Greenland Europa Hiawatha Projects/Lake Europa/Radar/radar_GPS_datetime_stereographic_2dinterp.csv',
                     index_col='datetime',
                     parse_dates=True)
 
 # GPS data from the precision GPS. processed by Celia
-gps_rover = pd.read_csv('/home/kirillivanov/Codes/MS_thesis/Precision_GPS_rover_lake_europa_2022.csv',
+gps_rover = pd.read_csv('G:/Shared drives/6 Greenland Europa Hiawatha Projects/Lake Europa/GPSdata_LakeEuropa/Precision_GPS_rover_lake_europa_2022.csv',
                    index_col='time_utc',
                    parse_dates=True)
 
 
 # GPS data fromt the hand held gps. comes from the combining of Christian and Georgia's GPS
-gps_hh = pd.read_csv('/home/kirillivanov/Codes/MS_thesis/HandHeld_GPS_rover_lake_europa_2022.csv',
+gps_hh = pd.read_csv('G:/Shared drives/6 Greenland Europa Hiawatha Projects/Lake Europa/GPSdata_LakeEuropa/HandHeld_GPS_rover_lake_europa_2022.csv',
                      index_col='time',
                      parse_dates=True)
 
@@ -165,7 +165,7 @@ ax[2].set_ylabel('(m.a.s.l.)')
 #and the radar is a few meter behind the GPS, so we substract 3.5 min,
 #which seems to best fit the time it takes the radar to be at the same position as the GPS based on easting position
 
-table = pd.read_csv("/home/kirillivanov/Codes/Toolbox/time_shift_for_lines.csv")
+table = pd.read_csv("G:/Shared drives/6 Greenland Europa Hiawatha Projects/Lake Europa/Radar/time_shift_for_lines.csv")
 #change path for G drive
 radar['index_shift'] = ''
 for i,timeshift in enumerate(table.time_shift):
