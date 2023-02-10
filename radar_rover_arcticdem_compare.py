@@ -22,7 +22,7 @@ def plot_2D(x,y,z,
             units='(m)'):
 
     fig,ax = plt.subplots(figsize=(10,10))
-    
+
     cmap = plt.cm.rainbow
     #norm = colors.BoundaryNorm(np.arange(round(min(z)),round(max(z)),10), cmap.N)
     norm = colors.BoundaryNorm(np.arange(-1,1,0.1), cmap.N)
@@ -35,8 +35,8 @@ def plot_2D(x,y,z,
     plt.xlabel(xlabel)
     plt.ylabel(ylabel)
 
-def get_data_from_profile(line, data, layer_name):    
-    rbs_surface = RectBivariateSpline(data['easting'], data['northing'][::-1], data[layer_name][::-1].T)   
+def get_data_from_profile(line, data, layer_name):
+    rbs_surface = RectBivariateSpline(data['easting'], data['northing'][::-1], data[layer_name][::-1].T)
     return rbs_surface.ev(line.easting, line.northing)
 
 ##############################################################################
@@ -45,23 +45,43 @@ def get_data_from_profile(line, data, layer_name):
 
 
 # previous lake position
-lake = pd.read_csv('G:/Shared drives/6 Greenland Europa Hiawatha Projects/Lake Europa/Previous_dataset/naqlk_2014_water_detected.csv')
+# lake = pd.read_csv('G:/Shared drives/6 Greenland Europa Hiawatha Projects/Lake Europa/Previous_dataset/naqlk_2014_water_detected.csv')
+
+# # GPS data from the radar instrument. exported by Kirill
+# radar = pd.read_csv('G:/Shared drives/6 Greenland Europa Hiawatha Projects/Lake Europa/Radar/radar_GPS_datetime_stereographic.csv',
+#                     index_col='datetime',
+#                     parse_dates=True)
+
+# # GPS data from the precision GPS. processed by Celia
+# gps_rover = pd.read_csv('G:/Shared drives/6 Greenland Europa Hiawatha Projects/Lake Europa/GPSdata_LakeEuropa/Precision_GPS_rover_lake_europa_2022.csv',
+#                    index_col='time_utc',
+#                    parse_dates=True)
+
+
+# # GPS data fromt the hand held gps. comes from the combining of Christian and Georgia's GPS
+# gps_hh = pd.read_csv('G:/Shared drives/6 Greenland Europa Hiawatha Projects/Lake Europa/GPSdata_LakeEuropa/HandHeld_GPS_rover_lake_europa_2022.csv',
+#                      index_col='time',
+#                      parse_dates=True)
+
+## KI - file path for my machine
+lake = pd.read_csv('/home/kirillivanov/Codes/MS_thesis/naqlk_2014_water_detected.csv')
 
 # GPS data from the radar instrument. exported by Kirill
-radar = pd.read_csv('G:/Shared drives/6 Greenland Europa Hiawatha Projects/Lake Europa/Radar/radar_GPS_datetime_stereographic.csv',
+radar = pd.read_csv('/home/kirillivanov/Codes/MS_thesis/radar_GPS_datetime_stereographic.csv',
                     index_col='datetime',
-                    parse_dates=True) 
+                    parse_dates=True)
 
 # GPS data from the precision GPS. processed by Celia
-gps_rover = pd.read_csv('G:/Shared drives/6 Greenland Europa Hiawatha Projects/Lake Europa/GPSdata_LakeEuropa/Precision_GPS_rover_lake_europa_2022.csv',
+gps_rover = pd.read_csv('/home/kirillivanov/Codes/MS_thesis/Precision_GPS_rover_lake_europa_2022.csv',
                    index_col='time_utc',
                    parse_dates=True)
 
 
 # GPS data fromt the hand held gps. comes from the combining of Christian and Georgia's GPS
-gps_hh = pd.read_csv('G:/Shared drives/6 Greenland Europa Hiawatha Projects/Lake Europa/GPSdata_LakeEuropa/HandHeld_GPS_rover_lake_europa_2022.csv',
+gps_hh = pd.read_csv('/home/kirillivanov/Codes/MS_thesis/HandHeld_GPS_rover_lake_europa_2022.csv',
                      index_col='time',
                      parse_dates=True)
+
 
 ##############################################################################
 # remove hiawatha data
@@ -126,7 +146,7 @@ gps_rover.to_csv('gps_rover_vs_arcticdem.csv')
 gps_hh['z_arcticdem'] = get_data_from_profile(gps_hh, arcticdem_10m, 'grid_interpolated')
 
 radar.to_csv('G:/Shared drives/6 Greenland Europa Hiawatha Projects/Lake Europa/Radar/radar_GPS_datetime_stereographic_2dinterp.csv')
-
+#%%
 # Compare Field data with each other
 ##############################################################################
 date_range = [pd.to_datetime('2022-08-11 00:00'),pd.to_datetime('2022-08-23 00:00')]
@@ -155,8 +175,8 @@ ax[2].set_ylim(1250,1450)
 for i in [0,1,2]:
     ax[i].legend()
     ax[i].set_ylabel('(m.a.s.l)')
-    
 
+#%%
 # Compare GPS ROVER with ArcticDEM
 ##############################################################################
 fig,ax = plt.subplots()
