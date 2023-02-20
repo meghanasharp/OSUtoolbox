@@ -11,6 +11,7 @@ import os
 import numpy as np
 import pandas as pd
 import h5py
+from impdar.lib import load
 #%% _dm2dec
 def _dm2dec(dms):
     """
@@ -116,9 +117,11 @@ def _dt_string(dset):
     t = t[:t.find(' ')]
     split = re.split('_',t)
     return [split[0],split[1]]
-#%% _radar_xyzt_extraction
-def _radar_xyzt_extraction(time_format='csv',Excel=False,csv=False):
+#%% _radar_xyzt_extraction --> from original h5py file 
+def _radar_xyzt_extraction_old(time_format='csv',Excel=False,csv=False):
     """
+   !!!! WARNING -- doesnt fix nans, when saved to table nans arent saved !!!!!
+    
     Extracts x,y,z,t from hdf5 IceRadar file structure.
     Code by Kirill Ivanov.
 
@@ -209,13 +212,10 @@ def _radar_xyzt_extraction(time_format='csv',Excel=False,csv=False):
                     for loc_num in range(tnum):
                         echogram = dset['location_{:d}'.format(loc_num)]['datacapture_'+ch]['echogram_'+ch]
                         # read GPS data cluster for an echogram
-                        if type(dset['location_{:d}'.format(loc_num)][
-                            'datacapture_'+ch]['echogram_'+ch].attrs[gps_cluster_str]) == str:
-                            gps_data = dset['location_{:d}'.format(loc_num)][
-                                'datacapture_'+ch]['echogram_'+ch].attrs[gps_cluster_str]
+                        if type(echogram.attrs[gps_cluster_str]) == str:
+                            gps_data = echogram.attrs[gps_cluster_str]
                         else:
-                            gps_data = dset['location_{:d}'.format(loc_num)][
-                                'datacapture_'+ch]['echogram_'+ch].attrs[gps_cluster_str].decode('utf-8')
+                            gps_data = echogram.attrs[gps_cluster_str].decode('utf-8')
                         #obtain recorded values from xml file (GPS cluster) and assign to temporary x,y,z,t
                         if (float(_xmlGetVal(gps_data, gps_fix_str)) > 0) and (
                                 float(_xmlGetVal(gps_data, gps_message_str)) > 0):
@@ -229,9 +229,9 @@ def _radar_xyzt_extraction(time_format='csv',Excel=False,csv=False):
                                 tm.append(temp[1])
                                 dat.append(temp[0] + ' ' + temp[1])
                             except:
-                                elev[loc_num] = np.nan
-                                lat[loc_num] = np.nan
-                                lon[loc_num] = np.nan
+                                _xmlGetVal(gps_data,alt_asl) == ''
+                                _xmlGetVal(gps_data, 'Lat') == ''
+                                _xmlGetVal(gps_data, 'Long') == ''
                                 d[loc_num] = np.nan
                         else:
                             elev[loc_num] = np.nan
@@ -288,6 +288,97 @@ def _radar_xyzt_extraction(time_format='csv',Excel=False,csv=False):
                   'datetime': datetime}
     else:
         raise ValueError('Inappropriate value. Choose (csv) or (separate)')
+    df = pd.DataFrame(data = final, index = None)
+    #Save to excel for convinience
+    if Excel:
+        print('Saving dataframe to excel')
+        df.to_excel('Radar_GPSdata.xlsx')
+    if csv:
+        print('Saving datagrame to csv')
+        df.to_csv('Radar_GPSdata.csv')
+    return df
+
+#%% _radar_xyzt_extraction
+def _radar_xyzt_extraction(Excel=False,csv=False):
+    """
+    Extracts x,y,z,t from hdf5 IceRadar file structure using ImpDAR's load funciton.
+    load function interpolates for bad gps points - so there are no nan values.  
+    Code by Kirill Ivanov.
+
+    Parameters
+    ----------
+
+    {Required}
+    None - funciton will run in the current working directory for every hdf5 file.
+    Make sure that only IceRadar hdf5 files are in the directory.
+    Make sure that the files are trimmed off unloading lines. 
+
+    {Optional}
+    Excel: False/True
+        True - function will write excel file to the current directory with
+        final dataframe
+    csv: False/True
+        True - function will write csv file to the current directory with
+        final dataframe
+
+    Return
+    ----------
+    df: pandas.core.frame.DataFrame
+        pandas DataFrame with following columns
+        'file_name': str,
+        'line_name': str,
+        'x_lon': int, Decimal degrees coordinate
+        'y_lat': int, Decimal degrees coordinate
+        'z_elev': int, meter
+        'datetime': Datetime,
+
+    """
+    #Assign variables
+    ch = '0'
+    #Create arrays
+    x = []
+    y = []
+    z = []
+    F_name = []
+    L_name =[]
+    datetime = list()
+
+
+    #check everyfile in the current working directory
+    for file in os.listdir(os.getcwd()):
+        if file.endswith('.hdf5'):
+            print('Processing ' + file + '.')
+            #read hdf5 files
+            bsi_f = load.load('bsi',file)
+            for dset_number in range(len(bsi_f)):
+                dset_bsi = bsi_f[dset_number]
+                x = np.append(x,-1*vars(dset_bsi)['long'])
+                y = np.append(y, vars(dset_bsi)['lat'])
+                z = np.append(z, vars(dset_bsi)['elev'])
+            with h5py.File(str(file),'r') as f_in:
+                dset_name = [key for key in f_in.keys()]
+                #read each line separetely
+                for dset_name in dset_name:
+                    #Create empty temporary arrays
+                    dset = f_in[dset_name]
+                    tnum = len(list(dset.keys()))
+                    dat = []
+                    #get the data from every echogram in a line
+                    for loc_num in range(tnum):
+                        echogram = dset['location_{:d}'.format(loc_num)]['datacapture_'+ch]['echogram_'+ch]
+                        temp = _dt_string(echogram)
+                        dat.append(temp[0] + ' ' + temp[1])
+                    L_name = np.append(L_name, np.full((tnum,),dset_name))
+                    F_name = np.append(F_name, np.full((tnum,),str(file)))
+                    datetime.extend(dat)
+        else:
+            print(file + 'is not supported. Only .hdf5 are accepted.')
+    final = {'file_name': F_name,
+             'line_name': L_name,
+             'x_lon': x,
+             'y_lat': y,
+             'z_elev': z,
+             'datetime': datetime}
     df = pd.DataFrame(data = final, index = None)
     #Save to excel for convinience
     if Excel:
