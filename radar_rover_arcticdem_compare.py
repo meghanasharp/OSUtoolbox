@@ -44,43 +44,43 @@ def get_data_from_profile(line, data, layer_name):
 ##############################################################################
 
 
-# previous lake position
-# lake = pd.read_csv('G:/Shared drives/6 Greenland Europa Hiawatha Projects/Lake Europa/Previous_dataset/naqlk_2014_water_detected.csv')
+#previous lake position
+lake = pd.read_csv('G:/Shared drives/6 Greenland Europa Hiawatha Projects/Lake Europa/Previous_dataset/naqlk_2014_water_detected.csv')
+
+# GPS data from the radar instrument. exported by Kirill
+radar = pd.read_csv('G:/Shared drives/6 Greenland Europa Hiawatha Projects/Lake Europa/Radar/radar_GPS_datetime_stereographic.csv',
+                    index_col='datetime',
+                    parse_dates=True)
+
+# GPS data from the precision GPS. processed by Celia
+gps_rover = pd.read_csv('G:/Shared drives/6 Greenland Europa Hiawatha Projects/Lake Europa/GPSdata_LakeEuropa/Precision_GPS_rover_lake_europa_2022.csv',
+                    index_col='time_utc',
+                    parse_dates=True)
+
+
+# GPS data fromt the hand held gps. comes from the combining of Christian and Georgia's GPS
+gps_hh = pd.read_csv('G:/Shared drives/6 Greenland Europa Hiawatha Projects/Lake Europa/GPSdata_LakeEuropa/HandHeld_GPS_rover_lake_europa_2022.csv',
+                      index_col='time',
+                      parse_dates=True)
+
+# ## KI - file path for my machine
+# lake = pd.read_csv('/home/kirillivanov/Codes/MS_thesis/naqlk_2014_water_detected.csv')
 
 # # GPS data from the radar instrument. exported by Kirill
-# radar = pd.read_csv('G:/Shared drives/6 Greenland Europa Hiawatha Projects/Lake Europa/Radar/radar_GPS_datetime_stereographic.csv',
+# radar = pd.read_csv('/home/kirillivanov/Codes/MS_thesis/radar_GPS_datetime_stereographic.csv',
 #                     index_col='datetime',
 #                     parse_dates=True)
 
 # # GPS data from the precision GPS. processed by Celia
-# gps_rover = pd.read_csv('G:/Shared drives/6 Greenland Europa Hiawatha Projects/Lake Europa/GPSdata_LakeEuropa/Precision_GPS_rover_lake_europa_2022.csv',
+# gps_rover = pd.read_csv('/home/kirillivanov/Codes/MS_thesis/Precision_GPS_rover_lake_europa_2022.csv',
 #                    index_col='time_utc',
 #                    parse_dates=True)
 
 
 # # GPS data fromt the hand held gps. comes from the combining of Christian and Georgia's GPS
-# gps_hh = pd.read_csv('G:/Shared drives/6 Greenland Europa Hiawatha Projects/Lake Europa/GPSdata_LakeEuropa/HandHeld_GPS_rover_lake_europa_2022.csv',
+# gps_hh = pd.read_csv('/home/kirillivanov/Codes/MS_thesis/HandHeld_GPS_rover_lake_europa_2022.csv',
 #                      index_col='time',
 #                      parse_dates=True)
-
-## KI - file path for my machine
-lake = pd.read_csv('/home/kirillivanov/Codes/MS_thesis/naqlk_2014_water_detected.csv')
-
-# GPS data from the radar instrument. exported by Kirill
-radar = pd.read_csv('/home/kirillivanov/Codes/MS_thesis/radar_GPS_datetime_stereographic.csv',
-                    index_col='datetime',
-                    parse_dates=True)
-
-# GPS data from the precision GPS. processed by Celia
-gps_rover = pd.read_csv('/home/kirillivanov/Codes/MS_thesis/Precision_GPS_rover_lake_europa_2022.csv',
-                   index_col='time_utc',
-                   parse_dates=True)
-
-
-# GPS data fromt the hand held gps. comes from the combining of Christian and Georgia's GPS
-gps_hh = pd.read_csv('/home/kirillivanov/Codes/MS_thesis/HandHeld_GPS_rover_lake_europa_2022.csv',
-                     index_col='time',
-                     parse_dates=True)
 
 
 ##############################################################################
@@ -104,10 +104,13 @@ gps_hh = gps_hh[gps_hh.easting>-540000]
 ##############################################################################
 #uncomment to load the right dataset. 2m dem from arctic dem is pretty heavy
 
-bedmachine = gf.get_netcdf_data('J:/QGreenland_v2.0.0/Additional/BedMachineGreenland_V5/BedMachineGreenland-v5.nc', data_type='Bedmachine')
+#bedmachine = gf.get_netcdf_data("G:/Shared drives/6 Greenland Europa Hiawatha Projects/Lake Europa/FlowBand/2d_data_for_extraction/BedMachineGreenland-v5.nc", data_type='Bedmachine')
+
+#my machine path, couldn't load it from G drive
+bedmachine = gf.get_netcdf_data("C:/Users/kiril/Downloads/BedMachineGreenland-v5.nc", data_type='Bedmachine')
 
 # arcticdem_2m = gf.get_geotiff_data('J:/QGreenland_v2.0.0/Additional/Arctic DEM/Arctic_DEM_mosaic_merged_2m.tif')
-arcticdem_10m = gf.get_geotiff_data('J:/QGreenland_v2.0.0/Additional/Arctic DEM/Arctic_DEM_mosaic_merged_10m.tif')
+arcticdem_10m = gf.get_geotiff_data('G:/Shared drives/6 Greenland Europa Hiawatha Projects/Lake Europa/FlowBand/2d_data_for_extraction/29_35_10m_v3.0_reg_dem.tif')
 # arcticdem_32m = gf.get_geotiff_data('J:/QGreenland_v2.0.0/Additional/Arctic DEM/Arctic_DEM_mosaic_merged_32m.tif')
 
 
