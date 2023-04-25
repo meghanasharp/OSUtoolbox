@@ -9,7 +9,7 @@ from zipfile import ZipFile
 
 
 
-def concat_gps_csv_files(path_to_folder=None, path_to_save=None, output_filename='extracted_ppp'):
+def concat_gps_csv_files(path_to_folder=None, path_to_save=None, output_filename='extracted_ppp', local_utc=None):
     """
     This function concatenate GPS data csv files CSRS-PPP SPARK Results produced by 
     https://webapp.csrs-scrs.nrcan-rncan.gc.ca/geod/tools-outils/ppp.php?locale=en
@@ -24,10 +24,13 @@ def concat_gps_csv_files(path_to_folder=None, path_to_save=None, output_filename
         Full path to the folder where the final concatenated csv will be saved.
     output_filename : String
         Name of the file to be saved.
+    local_utc : positive or negative integer
+        for example NW Greenland time is -3
 
     Returns
     -------
     Saves a .csv file containing all the concatenated data.
+    
 
     """
     #create dataframe with column names from the original csv files
@@ -65,7 +68,8 @@ def concat_gps_csv_files(path_to_folder=None, path_to_save=None, output_filename
     #create time array in local and utc time    
     df['time_utc'] = dt.datetime.strptime("01/01/22", "%m/%d/%y") + pd.to_timedelta(df.day_of_year-1,'d')  + pd.to_timedelta(df.decimal_hour,'h') #do we need to substract one day?? ask christian
     df['time_utc'] = np.round(df['time_utc'].astype(np.int64), -9).astype('datetime64[ns]')
-    df['time_local'] = df['time_utc'] + dt.timedelta(hours = -3)
+    if local_utc is not None:
+        df['time_local'] = df['time_utc'] + dt.timedelta(hours = local_utc)
     
     #save to a csv file
     df.to_csv(path_to_save + output_filename + '.csv')#, encoding='utf-8-sig')
