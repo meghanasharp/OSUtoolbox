@@ -19,7 +19,7 @@ def concat_gps_csv_files(path_to_folder=None, path_to_save=None, output_filename
     ----------
     path_to_folder : String
         Full path to the folder containing the csv files to concatenate.
-        The folder should only contain the csv files. 
+        The zipped folder received from CSRS-PPP should be unzipped. but leave the subfolder zipped. 
     path_to_save : String
         Full path to the folder where the final concatenated csv will be saved.
     output_filename : String
