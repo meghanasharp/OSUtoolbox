@@ -31,8 +31,10 @@ path_to_save = 'C:/Users/trunzc/Box/SIIOS-LakeEuropa-Hiawatha-DataRepo-2022-2023
 
 
 output_filename = 'GPS_concat'
+local_utc = -3
 df_base = gf.concat_gps_csv_files(path_to_folder = path_to_folder, 
                       path_to_save = path_to_save, 
-                      output_filename = output_filename)
+                      output_filename = output_filename, 
+                      local_utc = local_utc)
 
 
